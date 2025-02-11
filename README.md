@@ -12,6 +12,10 @@ Tool and data presentation
 
 *How can visualizing options chain data improve a trader’s ability to identify profitable strategies?*
 
+*How can visualizing options strategies mitigate risk?*
+
+*How can time-varying (dynamic) options chains provide greater insight?*
+
 ## Goal 
 
 Web-app (streamlit) or interface that allows users to upload a dataframe (e.g. csv) of a single or multiple options chains and automatically generate visuals for their data. This web-app will be deployed and hosted using streamlit's free service through ourr public git repo.
