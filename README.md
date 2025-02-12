@@ -18,7 +18,7 @@ Tool and data presentation
 
 ## Goal 
 
-Web-app (streamlit) or interface that allows users to upload a dataframe (e.g. csv) of a single or multiple options chains and automatically generate visuals for their data. This web-app will be deployed and hosted using streamlit's free service through ourr public git repo.
+Web-app (streamlit) or interface that allows users to upload a dataframe (e.g. csv) of a single or multiple options chains and automatically generate visuals for their data. This web-app will be deployed and hosted using streamlit's free service through our public git repo.
 
 ## Data sources
 
