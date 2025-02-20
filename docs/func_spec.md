@@ -46,23 +46,19 @@ Traders struggle to analyze this data effectively and recognize repeatable patte
 
 ## Use Cases
 
-### **Retail Trader**
-#### **Objective:** 
-Identify repeatable patterns and unusual options activity.
+1. **Retail Trader**
+- **Objective:** Identify repeatable patterns and unusual options activity.
+- **Expected Interactions:** 
+    - Upload data.
+    - Generate visualizations of the options chain.
+    - Manually analyze potential profitable trade events.
 
-#### **Expected Interactions:** 
-- Upload data.
-- Generate visualizations of the options chain.
-- Manually analyze potential profitable trade events.
-
-### **Risk Assessment for Possible Strategies**
-#### **Objective:** 
-Assess risk versus reward of multiple options strategies.
-
-#### **Expected Interactions:** 
-- Upload data.
-- Input risk tolerance, budget, and monetary outlook for the underlying stock.
-- Click to generate a sorted list of options strategies.
+2. **Risk Assessment for Possible Strategies**
+- **Objective:** Assess risk versus reward of multiple options strategies.
+- **Expected Interactions:** 
+    - Upload data.
+    - Input risk tolerance, budget, and monetary outlook for the underlying stock.
+    - Click to generate a sorted list of options strategies.
 
 ## User Interaction
 
