@@ -1,11 +1,7 @@
 # Functional Specification
 
 ## Background
-Options are contracts that give traders the right (but not the obligation) to buy or sell a stock at a set price (strike) before an expiration date by paying a relatively small premium. This allows traders to leverage positions with limited upfront costs. 
-
-Options chains are tabular datasets that list all call and put contracts across various strikes and expiration dates for a particular underlying asset. These chains contain multivariate data (e.g., strikes, expiration, Greeks, volume, open interest, theoretical Black-Scholes price), which can be difficult to interpret in a tabular format. Identifying trends in live (non-historical) data is challenging. 
-
-Traders struggle to analyze this data effectively and recognize repeatable patterns and profitable opportunities—less than 10% of options traders actually make money. Our goal is to create a series of insightful visualizations and strategy comparisons that enable traders to make more informed decisions regarding options contracts, maximizing returns while mitigating risk.
+> Options are contracts that give traders the right (but not the obligation) to buy or sell a stock at a set price (strike) before an expiration date by paying a relatively small premium, allowing traders to leverage positions with limited upfront cost. Options chains are tabular structured sets of data for all call and put contracts across all strikes and expiration dates of a particular underlying asset. As such, these chains contain multivariate data (e.g. strikes, expiration, Greeks, volume, open-interest, theoretical Black-Scholes price) that is difficult to interpret in tabular format and identify trends for live (non-historical) data. Traders struggle to scrutinize this data and identify repeatable patterns and profitable opportunities: less than 10% of options traders actually make money. Our goal is to create a series of insightful visualizations and strategy comparisons that allow traders to make more informed decisions regarding the options contract(s) in which they are investing to maximize their return and mitigate risk.
 
 ## User Profile
 
