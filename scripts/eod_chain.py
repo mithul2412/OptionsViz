@@ -14,15 +14,26 @@ ticker = st.text_input("Enter stock ticker:", value=None, placeholder='e.g. NVDA
 
 # ticker = 'nvda' #TODO: this is temp var for easier testing...remove later
 
-col = st.columns((4,4), gap='medium')
+col = st.columns((4,4), gap='small')
 
 if ticker is not None:
 
     ticker = ticker.upper()
 
-    with col[0]:
+    # get option chain and proc
+    yfticker = yf.Ticker(ticker)
 
-        # Custom TradingView widget for stock chart (Users can navigate to options)
+    expiration_dates = yfticker.options
+    opt = yfticker.option_chain(expiration_dates[0]) #current exp
+    calls = opt.calls
+    puts = opt.puts
+    
+    calls = calls.sort_values(by='strike')
+    puts = puts.sort_values(by='strike')
+    
+    ###########
+    # create widget
+    with col[0]:
         tradingview_widget = """
                 <div class="tradingview-widget-container">
                     <div id="tradingview_chart"></div>
@@ -46,70 +57,102 @@ if ticker is not None:
                     </script>
                 </div>
                 """
-
-        # Embed the TradingView widget
         st.components.v1.html(tradingview_widget, height=700)
 
     with col[1]:
         
-
-        # get option chain and proc
-        yfticker = yf.Ticker(ticker)
-
-        expiration_dates = yfticker.options
-        opt = yfticker.option_chain(expiration_dates[0]) #current exp
-        calls = opt.calls
-        puts = opt.puts
-        
-        calls = calls.sort_values(by='strike')
-        puts = puts.sort_values(by='strike')
-
-        ########################################
-        col_name='openInterest'
+        col_inner = st.columns((4,4), gap='small')
         ATM = opt.underlying['regularMarketPrice']
         span_end = int((calls.strike-ATM).abs().argmin())
-        max_oi = np.maximum(calls.openInterest.values.max(), puts.openInterest.values.max())
 
-        fig = go.Figure()        
-        fig.add_trace(go.Bar(
-            x=puts['strike'],
-            y=puts['openInterest'].values,
-            name='Puts',
-            orientation='v',
-            marker_color='#D9534F'
-        ))
+        with col_inner[0]:
+            ########################################
+            col_name='openInterest'
+            max_oi = np.maximum(calls.openInterest.values.max(), puts.openInterest.values.max())
 
-        fig.add_trace(go.Bar(
-            x=calls['strike'],
-            y=calls['openInterest'],
-            name='Calls',
-            orientation='v',
-            marker_color='#00C66B', marker_opacity=0.5
-        ))
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=puts['strike'],
+                y=-puts['openInterest'].values,
+                name='Puts',
+                orientation='v',
+                marker_color='#D9534F'
+            ))
 
-        # Add vertical span using layout shapes (highlight region)
-        fig.add_shape(
-            type="rect",
-            x0=0, x1=ATM,
-            y0=0, y1=max_oi+10,
-            fillcolor="#B39DDB",
-            opacity=0.15,
-            line_width=0,
-            name='ITM Level'
-        )
+            fig.add_trace(go.Bar(
+                x=calls['strike'],
+                y=calls['openInterest'],
+                name='Calls',
+                orientation='v',
+                marker_color='#00C66B', marker_opacity=0.5
+            ))
+            # Add vertical span using layout shapes (highlight region)
+            fig.add_shape(
+                type="rect",
+                x0=0, x1=ATM,
+                y0=0, y1=max_oi,
+                fillcolor="#B39DDB",
+                opacity=0.15,
+                line_width=0,
+                name='ITM Level'
+            )
 
-        fig.update_layout(
-            title="Open Interest by Strike ($)",
-            xaxis_title="Open Interest",
-            yaxis_title="Strike Price ($)",
-            barmode="overlay",
-            template="plotly_dark",
-            bargap=0.01,  # Control the gap between bars (smaller value = thicker bars)
-            bargroupgap=0.01, # Control the gap between groups of bars (if stacked or grouped)
-        )
-        st.plotly_chart(fig)
+            fig.update_layout(
+                title="Open Interest by Strike ($)",
+                xaxis_title="Strike Price ($)",
+                yaxis_title="Open Interest",
+                barmode="overlay",
+                template="plotly_dark",
+                bargap=0.01,  # Control the gap between bars (smaller value = thicker bars)
+                bargroupgap=0.01, # Control the gap between groups of bars (if stacked or grouped),
+            )
+            st.plotly_chart(fig)
+
+        with col_inner[1]:
+            ########################################
+            col_name='volume'
+            max_vol = np.maximum(calls.volume.values.max(), puts.volume.values.max())
+
+            fig2 = go.Figure()
+            fig2.add_trace(go.Bar(
+                x=puts['strike'],
+                y=puts['volume'],
+                name='Puts',
+                orientation='v',
+                marker_color='#D9534F'
+            ))
+
+            fig2.add_trace(go.Bar(
+                x=calls['strike'],
+                y=calls['volume'],
+                name='Calls',
+                orientation='v',
+                marker_color='#00C66B', marker_opacity=0.5
+            ))
+            
+            fig2.add_shape(
+                type="rect",
+                x0=0, x1=ATM,
+                y0=0, y1=max_vol,
+                fillcolor="#B39DDB",
+                opacity=0.15,
+                line_width=0,
+                name='ITM Level'
+            )
+
+            fig2.update_layout(
+                title="Volume by Strike ($)",
+                xaxis_title="Strike Price ($)",
+                yaxis_title="Volume",
+                barmode="overlay",
+                template="plotly_dark",
+                bargap=0.01,  # Control the gap between bars (smaller value = thicker bars)
+                bargroupgap=0.01, # Control the gap between groups of bars (if stacked or grouped),
+            )
+            st.plotly_chart(fig2)
 
         ################################################
+        st.divider()
 
         # plot IV bar chart (overlap calls and puts)
         fig = go.Figure()
