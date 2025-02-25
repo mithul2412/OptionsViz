@@ -13,5 +13,5 @@ st.set_page_config(
 
 # pg = st.navigation([st.Page("single_chain.py", title='Single Chain'),
 #                     st.Page("dynamic_chain.py", title='Dynamic Chain')])
-pg = st.navigation([st.Page("dynamic_chain.py", title='Dynamic Chain')])
+pg = st.navigation([st.Page("eod_chain.py", title='EOD Chain'), st.Page("single_chain.py", title='Single Chain')])
 pg.run()
