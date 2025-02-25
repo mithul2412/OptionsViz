@@ -1,19 +1,36 @@
 import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import numpy as np
-from copy import copy
-from PIL import Image
-import requests
-from io import BytesIO
+import yfinance as yf
 
-col = st.columns((4,4), gap='medium')
+ticker = st.text_input("Enter stock ticker:", value=None, placeholder='e.g. NVDA, AAPL, AMZN')
 
-with col[0]:
-    player0 = st.selectbox(
-        "Select file:",
-        ['test'],
-        index=None, #default value for user not come to an empty page, required
-        key='p0'
-    )
+if ticker is not None:
+
+    ticker = ticker.upper()
+
+    # Custom TradingView widget for stock chart (Users can navigate to options)
+    tradingview_widget = """
+    <div class="tradingview-widget-container">
+        <div id="tradingview_chart"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+        <script type="text/javascript">
+            new TradingView.widget({
+                "width": "100%",
+                "height": 600,
+                "symbol": "NASDAQ:""" + ticker + """",
+                "interval": "1",
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_top_toolbar": false,
+                "save_image": false,
+                "container_id": "tradingview_chart"
+            });
+        </script>
+    </div>
+    """
+
+    # Embed the TradingView widget
+    st.components.v1.html(tradingview_widget, height=600)
