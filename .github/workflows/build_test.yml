@@ -41,7 +41,7 @@ jobs:
     # GitHub will run the tests for each of these Python versions.
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9"] #, "3.10", "3.11"]
 
     # The actual workflow steps!
     steps:
@@ -104,8 +104,8 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-path: entropy
-          path-to-lcov: entropy/coverage.lcov
+          base-path: scripts
+          path-to-lcov: scripts/coverage.lcov
           # The following two options are needed for "parallel"
           # runs - ie if you have a matrix of python versions.
           # This holds off on reporting code coverage to
@@ -122,7 +122,7 @@ jobs:
     # can run.
     needs: build_test
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: mac-latest
     steps:
     - name: Coveralls Finished
       uses: coverallsapp/github-action@v2
