@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from scripts.utils import chain_utils
+from utils import chain_utils
 
 class TestUtils(unittest.TestCase):
 
