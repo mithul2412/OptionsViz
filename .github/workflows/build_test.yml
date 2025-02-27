@@ -41,7 +41,7 @@ jobs:
     # GitHub will run the tests for each of these Python versions.
     strategy:
       matrix:
-        python-version: ["3.9"] #, "3.10", "3.11"]
+        python-version: ["3.9.20"] #, "3.10", "3.11"]
 
     # The actual workflow steps!
     steps:
@@ -67,11 +67,12 @@ jobs:
           # Whether you want conda to automatically update the conda
           # version (helpful when some runners have old versions of
           # conda)
-          auto-update-conda: true
+          auto-update-conda: false #true
           # Which version of python you want conda to use
           python-version: ${{ matrix.python-version }}
           # We don't need the base environment, so don't activate it
           auto-activate-base: false
+          miniconda-version: "latest"
 
       # You don't normally need test coverage information when
       # developing locally - we just want it in CI - so we install
