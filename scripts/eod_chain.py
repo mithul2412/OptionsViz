@@ -73,7 +73,7 @@ if ticker is not None:
             fig = go.Figure()
             fig.add_trace(go.Bar(
                 x=puts['strike'],
-                y=-puts['openInterest'].values,
+                y=puts['openInterest'].values,
                 name='Puts',
                 orientation='v',
                 marker_color='#D9534F'
@@ -84,7 +84,7 @@ if ticker is not None:
                 y=calls['openInterest'],
                 name='Calls',
                 orientation='v',
-                marker_color='#00C66B', marker_opacity=0.5
+                marker_color='#00C66B'#, marker_opacity=0.5
             ))
             # Add vertical span using layout shapes (highlight region)
             fig.add_shape(
@@ -127,7 +127,7 @@ if ticker is not None:
                 y=calls['volume'],
                 name='Calls',
                 orientation='v',
-                marker_color='#00C66B', marker_opacity=0.5
+                marker_color='#00C66B'#, marker_opacity=0.5
             ))
             
             fig2.add_shape(
