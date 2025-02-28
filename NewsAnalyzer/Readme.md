@@ -1,36 +1,47 @@
-# Options Analysis Dashboard
+# News Analyzer with RAG and LLM
 
-An advanced options analysis tool that provides comprehensive insights and visualizations for stock options data. This dashboard uses real-time market data to analyze options metrics, including Greeks, IV skew, max pain levels, and put/call ratios, and provides strategic insights through an AI assistant.
+A powerful application that combines news retrieval, embedding-based search, and AI-powered analysis to help you explore and understand news content. This application fetches news articles from multiple sources, processes them using advanced natural language processing techniques, and allows you to ask questions about the content using a large language model.
 
-![Dashboard Screenshot](https://via.placeholder.com/800x400?text=Options+Analysis+Dashboard)
+![News Analyzer Screenshot](https://via.placeholder.com/800x400?text=News+Analyzer+Dashboard)
 
 ## Features
 
-- **Real-time Options Data Analysis**: Fetch and analyze current options data for any publicly traded stock
-- **Comprehensive Metrics**: View key options metrics including:
-  - Greeks (Delta, Gamma, Theta, Vega)
-  - Implied Volatility Skew
-  - Max Pain Analysis
-  - Put/Call Ratio
-  - Historical Volatility
-- **Multiple Expiration Analysis**: Compare options data across different expiration dates
-- **AI-Powered Strategy Insights**: Ask questions about the options data and receive strategic analysis
-- **Beautiful Visualization**: Intuitive and visually appealing dashboard interface
-- **Downloadable Data**: Export analysis data in JSON format for further analysis
+- **Real-time News Retrieval**: Fetch the latest news from multiple sources using NewsAPI
+- **Powerful Search**: Use semantic search to find relevant articles based on meaning, not just keywords
+- **AI-Powered Analysis**: Ask questions about the news and get intelligent responses
+- **Visual Content Display**: View articles with images in a clean, paginated interface
+- **Vector Database Storage**: Store processed news articles for efficient retrieval
+- **Multiple Language Support**: Search for news in different languages
+- **Category Filtering**: Focus on specific news categories like business, technology, sports, etc.
+- **Interactive Chat Interface**: Have a conversation about the news with AI assistance
+
+## System Architecture
+
+The application consists of several key components:
+
+1. **News Fetcher**: Retrieves articles from NewsAPI
+2. **News Processor**: Converts articles into document chunks suitable for embedding
+3. **Embedding Engine**: Creates vector representations of text using state-of-the-art models
+4. **Vector Database**: Stores embeddings in Pinecone for efficient similarity search
+5. **News Retriever**: Finds relevant articles based on semantic similarity
+6. **LLM Interface**: Connects to OpenRouter/OpenAI for AI-powered analysis
+7. **Web Interface**: Streamlit-based UI for interacting with the system
 
 ## Installation
 
 ### Prerequisites
 
 - Python 3.8+
-- Pip package manager
+- Pinecone account (for vector database)
+- NewsAPI key
+- OpenRouter or OpenAI API key
 
 ### Setup
 
-1. Clone this repository:
+1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/options-analysis-dashboard.git
-   cd options-analysis-dashboard
+   git clone https://github.com/yourusername/news-analyzer.git
+   cd news-analyzer
    ```
 
 2. Install required packages:
@@ -38,119 +49,133 @@ An advanced options analysis tool that provides comprehensive insights and visua
    pip install -r requirements.txt
    ```
 
-3. (Optional) Set up API keys for LLM integration:
-   - Create a `.env` file in the project root directory:
+3. Create a `.env` file with your API keys:
    ```
+   NEWSAPI_KEY=your_newsapi_key_here
+   PINECONE_API_KEY=your_pinecone_api_key_here
    OPENROUTER_API_KEY=your_openrouter_api_key_here
-   # or
-   OPENAI_API_KEY=your_openai_api_key_here
    ```
 
 ## Usage
 
-### Running the Dashboard
+### Web Interface (Streamlit)
 
-Start the Streamlit app:
+The easiest way to use the application is through the Streamlit web interface:
+
 ```bash
 streamlit run app.py
 ```
 
-This will open the dashboard in your default web browser at `http://localhost:8501`.
+This will open a browser window with the application interface, where you can:
 
-### Analyzing Options Data
+1. Enter a search query to find news articles
+2. Select news categories, sources, and date ranges
+3. View articles with images and descriptions
+4. Process and store articles in the vector database
+5. Ask questions about the news content
+6. See relevant source articles for each answer
 
-1. Enter a ticker symbol (e.g., AAPL, MSFT, TSLA) in the sidebar
-2. Select the number of expiration dates to analyze
-3. Check/uncheck "Include Historical Volatility" as needed
-4. Click "Analyze Options" to fetch and display the data
+### Command Line Interface
 
-### Understanding the Dashboard
+You can also use the command-line interface for automated news analysis:
 
-The dashboard is organized into several sections:
+```bash
+# Fetch, process, and store news articles
+python news_analyzer.py --query "artificial intelligence" --category "technology" --from-date "2025-02-20" --to-date "2025-02-27"
 
-1. **Main Metrics**: At the top, you'll see the current price, market cap, beta, and put/call ratio
-2. **Additional Information**: The next section displays 52-week high/low, dividend yield, next earnings date, and historical volatility
-3. **Options Expirations**: Options data is organized by expiration date in tabs
-   - For each expiration:
-     - Max Pain Strike: The price at which option sellers would have minimal payout
-     - IV Skew: The difference in implied volatility between ITM, ATM, and OTM options
-     - Calls/Puts Tables: Detailed data for near-ATM options, including Greeks
+# Use existing database without fetching new articles
+python news_analyzer.py --query "artificial intelligence" --skip-fetch
+```
 
-### Using the AI Options Strategist
+After running this command, you'll enter an interactive mode where you can ask questions about the news.
 
-At the bottom of the dashboard, you'll find the "Options Strategy Advisor" section:
+## Configuration Options
 
-1. Type your question about the displayed options data
-2. Click "Let's make money!" to receive an AI-generated analysis
-3. Review the strategic insights provided
+### Web Interface Settings
 
-Example questions:
-- "What's the implied volatility skew telling us about market sentiment?"
-- "Is there unusual activity in any strikes?"
-- "Would a iron condor strategy make sense with this IV profile?"
-- "What option strategies would be appropriate given the current IV and put/call ratio?"
+The Streamlit app provides several configuration options in the sidebar:
 
-## Project Structure
+- **Pinecone Index Name**: Name of the vector database index (default: "newsdata")
+- **Embedding Model**: Model used for creating vector embeddings
+  - Options include E5-Large, E5-Base, BGE-Large, BGE-Base
+- **LLM Model**: AI model used for answering questions
+  - Options include various models available through OpenRouter
 
-- `app.py`: The main Streamlit application
-- `main.py`: Core functions for options analysis and AI integration
-- `options_chain.py`: Functions for fetching and analyzing options chains
-- `advanced_options.py`: Advanced metrics calculations (max pain, IV skew)
-- `fundamentals.py`: Functions for fetching fundamental stock data
-- `json_packaging.py`: Functions for packaging analysis data in JSON format
-- `requirements.txt`: Package dependencies
+### Command Line Arguments
 
-## Technical Details
+The `news_analyzer.py` script accepts the following arguments:
 
-### Data Sources
+- `--query`: Search query for news articles (required)
+- `--sources`: Comma-separated list of news sources
+- `--from-date`: Start date for article search (YYYY-MM-DD)
+- `--to-date`: End date for article search (YYYY-MM-DD)
+- `--language`: Language code (default: "en")
+- `--category`: News category (business, entertainment, health, etc.)
+- `--skip-fetch`: Skip fetching new articles and use existing database
+- `--index-name`: Name of the Pinecone index (default: "newsdata")
+- `--model`: Embedding model name (default: "intfloat/e5-large-v2")
+- `--llm-model`: LLM model via OpenRouter (default: "deepseek/deepseek-chat:free")
 
-This dashboard uses [yfinance](https://github.com/ranaroussi/yfinance) to fetch real-time market data from Yahoo Finance, including:
+## File Structure
 
-- Stock price and fundamental data
-- Options chains for various expirations
-- Historical price data for volatility calculations
+- `app.py`: Streamlit web application
+- `news_analyzer.py`: Command-line interface
+- `news_fetcher.py`: Functions for retrieving news from NewsAPI
+- `news_processor.py`: Functions for processing news articles
+- `news_embedder.py`: Functions for creating embeddings and storing in Pinecone
+- `news_retriever.py`: Class for retrieving news from vector database
+- `llm_interface.py`: Class for interacting with LLMs via OpenRouter
+- `main.py`: Original entry point with simplified functionality
 
-### Calculations
+## Vector Database Setup
 
-- **Max Pain**: Calculated by determining the strike price where option holders (both puts and calls) would lose the most money upon expiration
-- **IV Skew**: Measures the difference in implied volatility across different strike prices
-- **Greeks**: Calculated using the Black-Scholes model via py_vollib (if installed)
-- **Historical Volatility**: Calculated from log returns over the past year, annualized
+The application uses Pinecone for storing and retrieving vector embeddings. The default index name is "newsdata" with a dimension of 1024 (for E5-Large embeddings). The system will automatically:
 
-### AI Integration
+1. Check if the index exists
+2. Create it if necessary
+3. Clear previous vectors before adding new ones (to avoid mixing news from different queries)
+4. Upload embeddings in batches to avoid memory issues
 
-The dashboard uses OpenRouter or OpenAI to provide strategic insights based on the options data. The AI model analyzes the compiled options data and responds to user questions with tailored strategic advice.
+## LLM Integration
+
+The application connects to OpenRouter to access various large language models. When you ask a question:
+
+1. The system retrieves the 10 most relevant articles
+2. It formats these articles as context for the LLM
+3. The LLM generates a response based on the articles and your question
+4. Sources are provided so you can verify the information
 
 ## Requirements
 
-The following Python packages are required:
-
-- streamlit
-- pandas
-- yfinance
-- numpy
-- python-dotenv
-- openai
-- py-vollib (optional, for Greeks calculations)
+- streamlit==1.32.0
+- python-dotenv==1.0.0
+- newsapi-python==0.2.7
+- langchain==0.1.12
+- sentence-transformers==2.5.0
+- pinecone-client==3.1.0
+- openai==1.22.0
+- torch==2.2.0
+- numpy==1.26.4
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **No Options Data Available**: Some stocks may not have options, or the options data might be unavailable temporarily
-2. **API Key Errors**: Ensure your OpenRouter or OpenAI API key is correctly set in the `.env` file
-3. **Missing Greeks**: If py_vollib is not installed, Greek calculations will show as "N/A"
+1. **API Key Errors**: Ensure your API keys are correctly set in the `.env` file
+2. **No Articles Found**: Try broadening your search query or date range
+3. **PyTorch Compatibility Issues**: The app handles PyTorch compatibility with Streamlit automatically
+4. **Vector Database Connection**: Check your Pinecone API key and network connection
+5. **LLM Response Errors**: Verify your OpenRouter API key and selected model
 
-### Getting Help
+## Extending the Application
 
-If you encounter issues with the dashboard, please:
-1. Check the console for error messages
-2. Verify your API keys and internet connection
-3. Ensure you have all required dependencies installed
+You can extend this application in several ways:
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. **Add more news sources**: Integrate with additional news APIs
+2. **Implement custom embeddings**: Use different embedding models
+3. **Add visualization features**: Create graphs of news trends
+4. **Enable sentiment analysis**: Analyze the sentiment of news articles
+5. **Implement user accounts**: Save searches and conversations
 
 ## License
 
@@ -158,7 +183,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- [yfinance](https://github.com/ranaroussi/yfinance) for providing easy access to Yahoo Finance data
-- [Streamlit](https://streamlit.io/) for the excellent web app framework
-- [py_vollib](https://github.com/vollib/py_vollib) for options Greeks calculations
-- [OpenRouter](https://openrouter.ai/) and [OpenAI](https://openai.com/) for AI capabilities
+- [NewsAPI](https://newsapi.org/) for providing access to news articles
+- [Sentence Transformers](https://www.sbert.net/) for embedding models
+- [Pinecone](https://www.pinecone.io/) for vector database services
+- [OpenRouter](https://openrouter.ai/) for LLM API access
+- [Streamlit](https://streamlit.io/) for the web interface framework
+- [LangChain](https://python.langchain.com/) for document processing utilities
