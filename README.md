@@ -26,3 +26,25 @@ Web-app (streamlit) or interface that allows users to upload a dataframe (e.g. c
 ## Data sources
 
 Think-or-Swim (TOS); and Interactive Brokers (IBKR) Trader Workstation (TWS) API
+
+
+## Execution
+
+To run the streamlit page, run this cmd from the main repo level:
+
+```bash
+streamlit run optionsviz/app.py
+```
+
+Then navigate in a browser to:
+```
+http://localhost:8501/
+```
+
+The app selects port 8501 by default, but can be controlled by including the flag: --server.port, e.g. to run on a specified port, use:
+
+```bash
+streamlit run optionsviz/app.py --server.port 5555
+```
+
+*Make sure you are forwarding the correct ports if running remotely*
