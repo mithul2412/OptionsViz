@@ -1,6 +1,8 @@
 # OptionsViz
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Workflow Status](https://github.com/rrichards7/OptionsViz/actions/workflows/build_test.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/rrichards7/OptionsViz/badge.svg?branch=main)](https://coveralls.io/github/rrichards7/OptionsViz?branch=main)
 
 <!-- ![Build/Test Workflow](https://github.com/UWDATA515/ci_example/actions/workflows/build_test.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/UWDATA515/ci_example/badge.svg?branch=main)](https://coveralls.io/github/UWDATA515/ci_example?branch=main) -->
