@@ -4,12 +4,115 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 
-ticker = st.text_input("Enter stock ticker:", value=None, placeholder='e.g. NVDA, AAPL, AMZN')
-st.divider()
+ticker_widget = '''
+<div class="tradingview-widget-container">
+  <div class="tradingview-widget-container__widget"></div>
+  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+  {
+  "symbols": [
+    {
+      "proName": "FOREXCOM:SPXUSD",
+      "title": "S&P 500 Index"
+    },
+    {
+      "proName": "FOREXCOM:NSXUSD",
+      "title": "US 100 Cash CFD"
+    },
+    {
+      "proName": "FX_IDC:EURUSD",
+      "title": "EUR to USD"
+    },
+    {
+      "proName": "BITSTAMP:BTCUSD",
+      "title": "Bitcoin"
+    },
+    {
+      "proName": "BITSTAMP:ETHUSD",
+      "title": "Ethereum"
+    }
+  ],
+  "height": "10%",
+  "showSymbolLogo": true,
+  "isTransparent": false,
+  "displayMode": "adaptive",
+  "colorTheme": "dark",
+  "locale": "en"
+}
+  </script>
+</div>
+'''
+
+ticker_cols = st.columns((4,4), gap='small')
+
+with ticker_cols[0]:
+    ticker = st.text_input("Enter stock ticker:", value=None, placeholder='e.g. NVDA, AAPL, AMZN')
 
 if ticker is not None:
 
     ticker = ticker.upper()
+
+    with ticker_cols[1]:        
+        single_ticker_widget = f'''
+                <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+                {{
+                "symbol": "{ticker}",
+                "locale": "en",
+                "dateRange": "1M",
+                "colorTheme": "dark",
+                "isTransparent": true,
+                "autosize": true,
+                "largeChartUrl": ""
+                }}
+                </script>
+                </div>
+        '''
+        news_widget = f'''
+                <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+                {{
+                "feedMode": "symbol",
+                "symbol": "{ticker}",
+                "isTransparent": true,
+                "displayMode": "compact",
+                "width": "400",
+                "height": "400",
+                "autosize": true,
+                "colorTheme": "dark",
+                "locale": "en"
+                }}
+                </script>
+                </div>
+        '''
+
+        tech_perf  = f'''
+            <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+            {{
+            "interval": "1m",
+            "width": 425,
+            "isTransparent": true,
+            "height": 450,
+            "symbol": "{ticker}",
+            "showIntervalTabs": true,
+            "displayMode": "single",
+            "locale": "en",
+            "colorTheme": "dark"
+            }}
+            </script>
+            </div>
+        '''
+        with st.sidebar:
+            st.components.v1.html(single_ticker_widget, height=100)
+            st.components.v1.html(tech_perf, height=400)
+            st.components.v1.html(news_widget, height=400)
+
+
 
     # get option chain and proc
     yfticker = yf.Ticker(ticker)
@@ -129,30 +232,6 @@ if ticker is not None:
 
     ###########
     # create widget
-    tradingview_widget = """
-            <div class="tradingview-widget-container">
-                <div id="tradingview_chart"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-                <script type="text/javascript">
-                    new TradingView.widget({
-                        "width": "100%",
-                        "height": 400,
-                        "symbol": "NASDAQ:""" + ticker + """",
-                        "interval": "1",
-                        "timezone": "Etc/UTC",
-                        "theme": "dark",
-                        "style": "1",
-                        "locale": "en",
-                        "toolbar_bg": "#f1f3f6",
-                        "enable_publishing": false,
-                        "hide_top_toolbar": false,
-                        "save_image": false,
-                        "container_id": "tradingview_chart"
-                    });
-                </script>
-            </div>
-            """
-
     col_inner = st.columns((4,4), gap='small')
     ATM = opt.underlying['regularMarketPrice']
     span_end = int((calls.strike-ATM).abs().argmin())
@@ -255,29 +334,99 @@ if ticker is not None:
         st.plotly_chart(fig)
 
     with col_vol[1]:
-        # volatility surface
-        xs, ys, zs = [], [], []
-        for e in expiration_dates:
-            xs.append(expiration_dates)
+        # # volatility surface
+        # xs, ys, zs = [], [], []
+        # for e in expiration_dates:
+        #     xs.append(expiration_dates)
 
-            opt = yfticker.option_chain(e)
-            calls = opt.calls
-            ys.append(calls.strike.values)
+        #     opt = yfticker.option_chain(e)
+        #     calls = opt.calls
+        #     ys.append(calls.strike.values)
 
-            zs.append(calls['impliedVolatility'].values * 100.)
+        #     zs.append(calls['impliedVolatility'].values * 100.)
 
-        fig = go.Figure(data=[go.Surface(z=zs, x=xs, y=ys)])
-        fig.update_layout(title=dict(text='Volatility Surface'), autosize=False,
-                        width=500, height=500,
-                        margin=dict(l=65, r=50, b=65, t=90),
-                        scene=dict(
+        # fig = go.Figure(data=[go.Surface(z=zs, x=xs, y=ys)])
+        # fig.update_layout(title=dict(text='Volatility Surface'), autosize=False,
+        #                 width=500, height=500,
+        #                 margin=dict(l=65, r=50, b=65, t=90),
+        #                 scene=dict(
+        #                         xaxis_title='Expiration Date',
+        #                         yaxis_title='Strike Price',
+        #                         zaxis_title='IV (%)',
+        #                     )
+        #                 )
+        # st.plotly_chart(fig)
+
+            if 'impliedVolatility' in calls.columns:
+                # volatility surface
+                try:
+                    xs, ys, zs = [], [], []
+                    for e in expiration_dates:
+                        xs.append(e)
+                        
+                        opt_e = yfticker.option_chain(e)
+                        calls_e = opt_e.calls
+                        
+                        if len(calls_e) > 0:
+                            ys.append(list(calls_e.strike.values))
+                            zs.append(list(calls_e['impliedVolatility'].values * 100.))
+                    
+                    if xs and ys and zs:
+                        # Create mesh grid for surface plot
+                        x_mesh, y_mesh = np.meshgrid(np.arange(len(xs)), np.arange(len(ys[0])))
+                        z_mesh = np.zeros_like(x_mesh, dtype=float)
+                        
+                        for i in range(len(xs)):
+                            for j in range(len(ys[0])):
+                                if j < len(zs[i]):
+                                    z_mesh[j, i] = zs[i][j]
+                        
+                        fig = go.Figure(data=[go.Surface(z=z_mesh, x=x_mesh, y=y_mesh)])
+                        fig.update_layout(
+                            title=dict(text='Volatility Surface'), 
+                            autosize=False,
+                            width=500, 
+                            height=500,
+                            margin=dict(l=65, r=50, b=65, t=90),
+                            scene=dict(
                                 xaxis_title='Expiration Date',
                                 yaxis_title='Strike Price',
                                 zaxis_title='IV (%)',
                             )
                         )
-        st.plotly_chart(fig)
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info("Insufficient data for volatility surface visualization.")
+                except Exception as e:
+                    st.error(f"Error creating volatility surface: {str(e)}")
+            else:
+                st.info("Implied volatility data not available for volatility surface.")
+
 
     # show price plot
     st.divider()
-    st.components.v1.html(tradingview_widget, height=400)
+
+    tv_advanced_plot = f"""
+        <div class="tradingview-widget-container">
+            <div id="tradingview_chart"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+            <script type="text/javascript">
+                new TradingView.widget({{
+                    "width": "100%",
+                    "height": 400,
+                    "symbol": "{ticker}",
+                    "interval": "1",
+                    "timezone": "Etc/UTC",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "toolbar_bg": "#f1f3f6",
+                    "enable_publishing": false,
+                    "hide_top_toolbar": false,
+                    "save_image": false,
+                    "container_id": "tv_advanced_plot"
+                }});
+            </script>
+        </div>
+        """
+    st.components.v1.html(tv_advanced_plot, height=400)
