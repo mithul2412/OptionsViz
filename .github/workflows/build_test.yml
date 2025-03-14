@@ -88,7 +88,7 @@ jobs:
       # Next step: run the unit tests with code coverage.
       - name: Unit tests
         run: |
-          cd scripts
+          cd optionsviz
           coverage run -m unittest discover
           coverage report
           coverage lcov
@@ -105,8 +105,8 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-path: scripts
-          path-to-lcov: scripts/coverage.lcov
+          base-path: optionsviz
+          path-to-lcov: optionsviz/coverage.lcov
           # The following two options are needed for "parallel"
           # runs - ie if you have a matrix of python versions.
           # This holds off on reporting code coverage to
