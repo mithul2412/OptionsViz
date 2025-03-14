@@ -42,7 +42,7 @@ ticker_widget = '''
 </div>
 '''
 
-ticker_cols = st.columns((4,4), gap='small')
+ticker_cols = st.columns((3,4), gap='small')
 
 with ticker_cols[0]:
     ticker = st.text_input("Enter stock ticker:", value=None, placeholder='e.g. NVDA, AAPL, AMZN')
@@ -51,8 +51,7 @@ if ticker is not None:
 
     ticker = ticker.upper()
 
-    with ticker_cols[1]:        
-        single_ticker_widget = f'''
+    single_ticker_widget = f'''
                 <div class="tradingview-widget-container">
                 <div class="tradingview-widget-container__widget"></div>
                 <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
@@ -67,50 +66,77 @@ if ticker is not None:
                 }}
                 </script>
                 </div>
-        '''
-        news_widget = f'''
-                <div class="tradingview-widget-container">
-                <div class="tradingview-widget-container__widget"></div>
-                <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-                {{
-                "feedMode": "symbol",
-                "symbol": "{ticker}",
-                "isTransparent": true,
-                "displayMode": "compact",
-                "width": "400",
-                "height": "400",
-                "autosize": true,
-                "colorTheme": "dark",
-                "locale": "en"
-                }}
-                </script>
-                </div>
-        '''
+                '''
 
-        tech_perf  = f'''
+    with ticker_cols[1]:
+        st.components.v1.html(single_ticker_widget, height=100)
+
+    news_widget = f'''
             <div class="tradingview-widget-container">
             <div class="tradingview-widget-container__widget"></div>
             <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
             {{
-            "interval": "1m",
-            "width": 425,
-            "isTransparent": true,
-            "height": 450,
+            "feedMode": "symbol",
             "symbol": "{ticker}",
-            "showIntervalTabs": true,
-            "displayMode": "single",
-            "locale": "en",
-            "colorTheme": "dark"
+            "isTransparent": true,
+            "displayMode": "compact",
+            "width": "400",
+            "height": "400",
+            "autosize": true,
+            "colorTheme": "dark",
+            "locale": "en"
             }}
             </script>
             </div>
-        '''
-        with st.sidebar:
-            st.components.v1.html(single_ticker_widget, height=100)
-            st.components.v1.html(tech_perf, height=400)
-            st.components.v1.html(news_widget, height=400)
+    '''
+
+    tech_perf  = f'''
+        <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+        {{
+        "interval": "1m",
+        "width": 425,
+        "isTransparent": true,
+        "height": 450,
+        "symbol": "{ticker}",
+        "showIntervalTabs": true,
+        "displayMode": "single",
+        "locale": "en",
+        "colorTheme": "dark"
+        }}
+        </script>
+        </div>
+    '''
+
+    tv_advanced_plot = f"""
+            <div class="tradingview-widget-container">
+                <div id="tradingview_chart"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                <script type="text/javascript">
+                    new TradingView.widget({{
+                        "width": "100%",
+                        "height": 400,
+                        "symbol": "{ticker}",
+                        "interval": "1",
+                        "timezone": "Etc/UTC",
+                        "theme": "dark",
+                        "style": "1",
+                        "locale": "en",
+                        "toolbar_bg": "#f1f3f6",
+                        "enable_publishing": false,
+                        "hide_top_toolbar": false,
+                        "save_image": false,
+                        "container_id": "tv_advanced_plot"
+                    }});
+                </script>
+            </div>
+            """
+    with st.sidebar:
+        st.components.v1.html(tech_perf, height=400)
+        st.components.v1.html(news_widget, height=400)
 
 
 
@@ -141,6 +167,7 @@ if ticker is not None:
     col_activity = st.columns((4,4), gap='small')
 
     with col_activity[0]:
+        st.write(f"#### Calls") 
         oi_min = st.number_input("Minumum OI", min_value=1, value=1_000,
                                  help='Minumum Open Interest to consider \
                                     when computing unusual options activity.')
@@ -180,6 +207,7 @@ if ticker is not None:
         st.dataframe(styled_df)
 
     with col_activity[1]:
+        st.write(f"#### Puts") 
         oi_min_puts = st.number_input("Minumum OI", min_value=1, key=2, value=1_000,
                                       help='Minumum Open Interest to consider when \
                                         computing unusual options activity.')
@@ -253,7 +281,7 @@ if ticker is not None:
             y=calls['openInterest'],
             name='Calls',
             orientation='v',
-            marker_color='#00C66B'#, marker_opacity=0.5
+            marker_color='#00C66B', marker_opacity=0.5
         ))
         # Add vertical span using layout shapes (highlight region)
         fig.add_shape(
@@ -294,7 +322,7 @@ if ticker is not None:
             y=calls['volume'],
             name='Calls',
             orientation='v',
-            marker_color='#00C66B'#, marker_opacity=0.5
+            marker_color='#00C66B', marker_opacity=0.5
         ))
 
         fig2.add_shape(
@@ -392,9 +420,17 @@ if ticker is not None:
                                 xaxis_title='Expiration Date',
                                 yaxis_title='Strike Price',
                                 zaxis_title='IV (%)',
+                            ),
+                            xaxis = dict(
+                                        tickmode = 'array',
+                                        tickvals = np.arange(len(xs)),
+                                        ticktext = xs
                             )
                         )
                         st.plotly_chart(fig, use_container_width=True)
+
+                        print(xs)
+
                     else:
                         st.info("Insufficient data for volatility surface visualization.")
                 except Exception as e:
@@ -403,30 +439,4 @@ if ticker is not None:
                 st.info("Implied volatility data not available for volatility surface.")
 
 
-    # show price plot
-    st.divider()
-
-    tv_advanced_plot = f"""
-        <div class="tradingview-widget-container">
-            <div id="tradingview_chart"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-            <script type="text/javascript">
-                new TradingView.widget({{
-                    "width": "100%",
-                    "height": 400,
-                    "symbol": "{ticker}",
-                    "interval": "1",
-                    "timezone": "Etc/UTC",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "en",
-                    "toolbar_bg": "#f1f3f6",
-                    "enable_publishing": false,
-                    "hide_top_toolbar": false,
-                    "save_image": false,
-                    "container_id": "tv_advanced_plot"
-                }});
-            </script>
-        </div>
-        """
     st.components.v1.html(tv_advanced_plot, height=400)
