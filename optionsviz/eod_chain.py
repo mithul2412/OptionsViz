@@ -293,6 +293,47 @@ def generate_widgets(ticker):
     
     return single_ticker_widget, tech_perf, tv_advanced_plot
 
+@st.cache_data()
+def get_data(ticker):
+    '''
+    get data
+    
+    '''
+    # get option chain and proc
+    yfticker = yf.Ticker(ticker)
+    expiration_dates = yfticker.options
+    money_level = yfticker.option_chain(expiration_dates[0]).underlying['regularMarketPrice']
+
+    # show unusual activity table
+    df_full_chain_calls = None
+    df_full_chain_puts = None
+    df_full_chain_calls_dict = dict()
+    df_full_chain_puts_dict = dict()
+
+    for e in expiration_dates:
+
+        opt = yfticker.option_chain(e)
+        calls = opt.calls
+        puts = opt.puts
+
+        if df_full_chain_calls is None:
+            df_full_chain_calls = calls.copy()
+        else:
+            df_full_chain_calls = pd.concat([df_full_chain_calls, calls])
+
+        if df_full_chain_puts is None:
+            df_full_chain_puts = puts.copy()
+        else:
+            df_full_chain_puts = pd.concat([df_full_chain_puts, puts])
+
+        # update master dicts
+        df_full_chain_calls_dict[e] = calls
+        df_full_chain_puts_dict[e] = puts
+
+    return df_full_chain_calls_dict, df_full_chain_puts_dict, \
+        df_full_chain_calls, df_full_chain_puts, expiration_dates, \
+            money_level
+
 def main():
     '''
     docstring here
@@ -314,49 +355,28 @@ def main():
         with st.sidebar:
             st.components.v1.html(tech_perf, height=400)
 
-        # get option chain and proc
-        yfticker = yf.Ticker(ticker)
-        expiration_dates = yfticker.options
-
-        # show unusual activity table
-        df_full_chain_calls = None
-        df_full_chain_puts = None
-        df_full_chain_calls_dict = dict()
-        df_full_chain_puts_dict = dict()
-
-        for e in expiration_dates:
-
-            opt = yfticker.option_chain(e)
-            calls = opt.calls
-            puts = opt.puts
-
-            if df_full_chain_calls is None:
-                df_full_chain_calls = calls.copy()
-            else:
-                df_full_chain_calls = pd.concat([df_full_chain_calls, calls])
-
-            if df_full_chain_puts is None:
-                df_full_chain_puts = puts.copy()
-            else:
-                df_full_chain_puts = pd.concat([df_full_chain_puts, puts])
-
-            # update master dicts
-            df_full_chain_calls_dict[e] = calls
-            df_full_chain_puts_dict[e] = puts
+        df_calls_dict, df_puts_dict, df_calls, \
+                df_puts, expiration_dates, ATM = get_data(ticker)
 
         st.divider()
         st.write(f"#### Unusual Options Activity")
 
         col_activity = st.columns((4,4), gap='small')
         with col_activity[0]:
+            
             st.write(f"#### Calls") 
-            oi_min_calls = st.number_input("Minumum OI", min_value=1, value=1_000,
+            
+            oi_min_calls = st.number_input("Minumum OI", min_value=1, 
+                                           key='oi_min_calls',
+                                           value=1_000,
                                     help='Minumum Open Interest to consider \
                                         when computing unusual options activity.')
+            
             show_itm_calls = st.checkbox("Show ITM", value=False, key='show_itm',
                                 help='Only show in-the-money (ITM) contracts, \
                                     otherwise show only out-of-money.')
-            df_full_chain_calls_proc = calc_unusual_table(df_full_chain_calls, show_itm_calls, oi_min_calls)
+
+            df_full_chain_calls_proc = calc_unusual_table(df_calls, show_itm_calls, oi_min_calls)
 
             def colorize_rows(row):
                 norm = (row.unusual_activity - df_full_chain_calls_proc["unusual_activity"].min()) / \
@@ -371,13 +391,15 @@ def main():
 
         with col_activity[1]:
             st.write(f"#### Puts") 
-            oi_min_puts = st.number_input("Minumum OI", min_value=1, key=2, value=1_000,
+            oi_min_puts = st.number_input("Minumum OI", min_value=1, 
+                                          key='oi_min_puts',
+                                          value=1_000,
                                         help='Minumum Open Interest to consider when \
                                             computing unusual options activity.')
             show_itm_puts = st.checkbox("Show ITM", value=False, key='show_itm_puts',
                                         help='Only show in-the-money (ITM) contracts, \
                                             otherwise show only out-of-money.')
-            df_full_chain_puts_proc = calc_unusual_table(df_full_chain_puts, show_itm_puts, oi_min_puts)
+            df_full_chain_puts_proc = calc_unusual_table(df_puts, show_itm_puts, oi_min_puts)
             
             def colorize_rows(row):
                 norm = (row.unusual_activity - df_full_chain_puts_proc["unusual_activity"].min()) / \
@@ -396,18 +418,13 @@ def main():
         exp_date = st.selectbox(
                 "Select an expiration date",
                 expiration_dates,
-        )
-
-        opt = yfticker.option_chain(exp_date)
-        calls = opt.calls
-        puts = opt.puts
-
+        )        
+        calls = df_calls_dict[exp_date]
+        puts = df_puts_dict[exp_date]
         calls = calls.sort_values(by='strike')
         puts = puts.sort_values(by='strike')
 
-        ###########
         col_inner = st.columns((4,4), gap='small')
-        ATM = opt.underlying['regularMarketPrice']
 
         with col_inner[0]:
             oi_hist = create_oi_hists(calls, puts, ATM)
@@ -432,9 +449,9 @@ def main():
                                     help='Show surface for calls (checked) or puts (unchecked)')
             
             if show_calls:
-                surface_fig = plot_surface(df_full_chain_calls_dict, expiration_dates)
+                surface_fig = plot_surface(df_calls_dict, expiration_dates)
             else:
-                surface_fig = plot_surface(df_full_chain_puts_dict, expiration_dates)
+                surface_fig = plot_surface(df_puts_dict, expiration_dates)
             st.plotly_chart(surface_fig, use_container_width=True)
 
         # add the chart widget
