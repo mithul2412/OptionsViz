@@ -230,67 +230,72 @@ def generate_widgets(ticker):
     add docstring here
     
     """
-    single_ticker_widget = f'''
-                <div class="tradingview-widget-container">
-                <div class="tradingview-widget-container__widget"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-                {{
-                "symbol": "{ticker}",
-                "locale": "en",
-                "dateRange": "1M",
-                "colorTheme": "dark",
-                "isTransparent": true,
-                "autosize": true,
-                "largeChartUrl": ""
-                }}
-                </script>
-                </div>
-                '''
     
-    tech_perf  = f'''
-        <div class="tradingview-widget-container">
+    single_ticker_widget = f'''
+    <div class="tradingview-widget-container">
         <div class="tradingview-widget-container__widget"></div>
-        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
         {{
-        "interval": "1m",
-        "width": 425,
-        "isTransparent": true,
-        "height": 450,
-        "symbol": "{ticker}",
-        "showIntervalTabs": true,
-        "displayMode": "single",
-        "locale": "en",
-        "colorTheme": "dark"
+            "symbol": "{ticker}",
+            "locale": "en",
+            "dateRange": "1M",
+            "colorTheme": "dark",
+            "isTransparent": true,
+            "autosize": true,
+            "largeChartUrl": ""
         }}
         </script>
-        </div>
+    </div>
     '''
 
-    tv_advanced_plot = f"""
-            <div class="tradingview-widget-container">
-                <div id="tradingview_chart"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-                <script type="text/javascript">
-                    new TradingView.widget({{
-                        "width": "100%",
-                        "height": 400,
-                        "symbol": "{ticker}",
-                        "interval": "1",
-                        "timezone": "Etc/UTC",
-                        "theme": "dark",
-                        "style": "1",
-                        "locale": "en",
-                        "toolbar_bg": "#f1f3f6",
-                        "enable_publishing": false,
-                        "hide_top_toolbar": false,
-                        "save_image": false,
-                        "container_id": "tv_advanced_plot"
-                    }});
-                </script>
+    tech_perf = f'''
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright">
+                <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                    <span class="blue-text">Track all markets on TradingView</span>
+                </a>
             </div>
-            """
-    
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+            {{
+                "interval": "1m",
+                "width": 425,
+                "isTransparent": true,
+                "height": 450,
+                "symbol": "{ticker}",
+                "showIntervalTabs": true,
+                "displayMode": "single",
+                "locale": "en",
+                "colorTheme": "dark"
+            }}
+            </script>
+        </div>
+        '''
+
+    tv_advanced_plot = f"""
+        <div class="tradingview-widget-container">
+            <div id="tradingview_chart"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+            <script type="text/javascript">
+                new TradingView.widget({{
+                    "width": "100%",
+                    "height": 400,
+                    "symbol": "{ticker}",
+                    "interval": "1",
+                    "timezone": "Etc/UTC",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "toolbar_bg": "#f1f3f6",
+                    "enable_publishing": false,
+                    "hide_top_toolbar": false,
+                    "save_image": false,
+                    "container_id": "tv_advanced_plot"
+                }});
+            </script>
+        </div>
+        """
+        
     return single_ticker_widget, tech_perf, tv_advanced_plot
 
 @st.cache_data()
@@ -301,38 +306,44 @@ def get_data(ticker):
     '''
     # get option chain and proc
     yfticker = yf.Ticker(ticker)
-    expiration_dates = yfticker.options
-    money_level = yfticker.option_chain(expiration_dates[0]).underlying['regularMarketPrice']
+    expiration_dates = list(yfticker.options)
 
-    # show unusual activity table
-    df_full_chain_calls = None
-    df_full_chain_puts = None
-    df_full_chain_calls_dict = dict()
-    df_full_chain_puts_dict = dict()
+    if len(expiration_dates):
+    
+        money_level = float(yfticker.option_chain(expiration_dates[0]).underlying['regularMarketPrice'])
 
-    for e in expiration_dates:
+        # show unusual activity table
+        df_full_chain_calls = None
+        df_full_chain_puts = None
+        df_full_chain_calls_dict = dict()
+        df_full_chain_puts_dict = dict()
 
-        opt = yfticker.option_chain(e)
-        calls = opt.calls
-        puts = opt.puts
+        for e in expiration_dates:
 
-        if df_full_chain_calls is None:
-            df_full_chain_calls = calls.copy()
-        else:
-            df_full_chain_calls = pd.concat([df_full_chain_calls, calls])
+            opt = yfticker.option_chain(e)
+            calls = opt.calls
+            puts = opt.puts
 
-        if df_full_chain_puts is None:
-            df_full_chain_puts = puts.copy()
-        else:
-            df_full_chain_puts = pd.concat([df_full_chain_puts, puts])
+            if df_full_chain_calls is None:
+                df_full_chain_calls = calls.copy()
+            else:
+                df_full_chain_calls = pd.concat([df_full_chain_calls, calls])
 
-        # update master dicts
-        df_full_chain_calls_dict[e] = calls
-        df_full_chain_puts_dict[e] = puts
+            if df_full_chain_puts is None:
+                df_full_chain_puts = puts.copy()
+            else:
+                df_full_chain_puts = pd.concat([df_full_chain_puts, puts])
 
-    return df_full_chain_calls_dict, df_full_chain_puts_dict, \
-        df_full_chain_calls, df_full_chain_puts, expiration_dates, \
-            money_level
+            # update master dicts
+            df_full_chain_calls_dict[e] = calls
+            df_full_chain_puts_dict[e] = puts
+
+        return df_full_chain_calls_dict, df_full_chain_puts_dict, \
+            df_full_chain_calls, df_full_chain_puts, expiration_dates, \
+                money_level, True
+    else:
+        st.error(f'Unable to find option chain for ticker: {ticker}', icon="🚨")
+        return None, None, None, None, None, None, False
 
 def main():
     '''
@@ -347,116 +358,120 @@ def main():
     if ticker is not None:
 
         ticker = ticker.upper()
-        single_ticker_widget, tech_perf, tv_advanced_plot = generate_widgets(ticker)
-
-        with ticker_cols[1]:
-            st.components.v1.html(single_ticker_widget, height=100)
-        
-        with st.sidebar:
-            st.components.v1.html(tech_perf, height=400)
 
         df_calls_dict, df_puts_dict, df_calls, \
-                df_puts, expiration_dates, ATM = get_data(ticker)
+                df_puts, expiration_dates, ATM, \
+                     valid_ticker = get_data(ticker)
+        
+        if valid_ticker:
 
-        st.divider()
-        st.write(f"#### Unusual Options Activity")
+            single_ticker_widget, tech_perf, tv_advanced_plot = generate_widgets(ticker)
 
-        col_activity = st.columns((4,4), gap='small')
-        with col_activity[0]:
+            with ticker_cols[1]:
+                st.components.v1.html(single_ticker_widget, height=100)
             
-            st.write(f"#### Calls") 
-            
-            oi_min_calls = st.number_input("Minumum OI", min_value=1, 
-                                           key='oi_min_calls',
-                                           value=1_000,
-                                    help='Minumum Open Interest to consider \
-                                        when computing unusual options activity.')
-            
-            show_itm_calls = st.checkbox("Show ITM", value=False, key='show_itm',
-                                help='Only show in-the-money (ITM) contracts, \
-                                    otherwise show only out-of-money.')
+            with st.sidebar:
+                st.components.v1.html(tech_perf, height=400)
 
-            df_full_chain_calls_proc = calc_unusual_table(df_calls, show_itm_calls, oi_min_calls)
+            st.divider()
+            st.write(f"#### Unusual Options Activity")
 
-            def colorize_rows(row):
-                norm = (row.unusual_activity - df_full_chain_calls_proc["unusual_activity"].min()) / \
-                    (df_full_chain_calls_proc["unusual_activity"].max() - \
-                        df_full_chain_calls_proc["unusual_activity"].min())
-                color = f'background-color: rgba({255 * (1 - norm)}, \
-                    {255 * norm}, 0, 0.5)'
-                return [color] * len(row)
+            col_activity = st.columns((4,4), gap='small')
+            with col_activity[0]:
+                
+                st.write(f"#### Calls") 
+                
+                oi_min_calls = st.number_input("Minumum OI", min_value=1, 
+                                            key='oi_min_calls',
+                                            value=1_000,
+                                        help='Minumum Open Interest to consider \
+                                            when computing unusual options activity.')
+                
+                show_itm_calls = st.checkbox("Show ITM", value=False, key='show_itm',
+                                    help='Only show in-the-money (ITM) contracts, \
+                                        otherwise show only out-of-money.')
 
-            styled_df_calls = df_full_chain_calls_proc.style.apply(colorize_rows, axis=1)
-            st.dataframe(styled_df_calls)
+                df_full_chain_calls_proc = calc_unusual_table(df_calls, show_itm_calls, oi_min_calls)
 
-        with col_activity[1]:
-            st.write(f"#### Puts") 
-            oi_min_puts = st.number_input("Minumum OI", min_value=1, 
-                                          key='oi_min_puts',
-                                          value=1_000,
-                                        help='Minumum Open Interest to consider when \
-                                            computing unusual options activity.')
-            show_itm_puts = st.checkbox("Show ITM", value=False, key='show_itm_puts',
-                                        help='Only show in-the-money (ITM) contracts, \
-                                            otherwise show only out-of-money.')
-            df_full_chain_puts_proc = calc_unusual_table(df_puts, show_itm_puts, oi_min_puts)
-            
-            def colorize_rows(row):
-                norm = (row.unusual_activity - df_full_chain_puts_proc["unusual_activity"].min()) / \
-                    (df_full_chain_puts_proc["unusual_activity"].max() - \
-                        df_full_chain_puts_proc["unusual_activity"].min())
-                color = f'background-color: rgba({255 * (1 - norm)}, \
-                    {255 * norm}, 0, 0.5)'
-                return [color] * len(row)
+                def colorize_rows(row):
+                    norm = (row.unusual_activity - df_full_chain_calls_proc["unusual_activity"].min()) / \
+                        (df_full_chain_calls_proc["unusual_activity"].max() - \
+                            df_full_chain_calls_proc["unusual_activity"].min())
+                    color = f'background-color: rgba({255 * (1 - norm)}, \
+                        {255 * norm}, 0, 0.5)'
+                    return [color] * len(row)
 
-            styled_df_puts = df_full_chain_puts_proc.style.apply(colorize_rows, axis=1)
-            st.dataframe(styled_df_puts)
+                styled_df_calls = df_full_chain_calls_proc.style.apply(colorize_rows, axis=1)
+                st.dataframe(styled_df_calls)
 
-        st.divider()
-        st.write(f"#### Chain Analysis")
+            with col_activity[1]:
+                st.write(f"#### Puts") 
+                oi_min_puts = st.number_input("Minumum OI", min_value=1, 
+                                            key='oi_min_puts',
+                                            value=1_000,
+                                            help='Minumum Open Interest to consider when \
+                                                computing unusual options activity.')
+                show_itm_puts = st.checkbox("Show ITM", value=False, key='show_itm_puts',
+                                            help='Only show in-the-money (ITM) contracts, \
+                                                otherwise show only out-of-money.')
+                df_full_chain_puts_proc = calc_unusual_table(df_puts, show_itm_puts, oi_min_puts)
+                
+                def colorize_rows(row):
+                    norm = (row.unusual_activity - df_full_chain_puts_proc["unusual_activity"].min()) / \
+                        (df_full_chain_puts_proc["unusual_activity"].max() - \
+                            df_full_chain_puts_proc["unusual_activity"].min())
+                    color = f'background-color: rgba({255 * (1 - norm)}, \
+                        {255 * norm}, 0, 0.5)'
+                    return [color] * len(row)
 
-        exp_date = st.selectbox(
-                "Select an expiration date",
-                expiration_dates,
-        )        
-        calls = df_calls_dict[exp_date]
-        puts = df_puts_dict[exp_date]
-        calls = calls.sort_values(by='strike')
-        puts = puts.sort_values(by='strike')
+                styled_df_puts = df_full_chain_puts_proc.style.apply(colorize_rows, axis=1)
+                st.dataframe(styled_df_puts)
 
-        col_inner = st.columns((4,4), gap='small')
+            st.divider()
+            st.write(f"#### Chain Analysis")
 
-        with col_inner[0]:
-            oi_hist = create_oi_hists(calls, puts, ATM)
-            st.plotly_chart(oi_hist)
+            exp_date = st.selectbox(
+                    "Select an expiration date",
+                    expiration_dates,
+            )        
+            calls = df_calls_dict[exp_date]
+            puts = df_puts_dict[exp_date]
+            calls = calls.sort_values(by='strike')
+            puts = puts.sort_values(by='strike')
 
-        with col_inner[1]:
-            vol_hists = create_vol_hists(calls, puts, ATM)
-            st.plotly_chart(vol_hists)
+            col_inner = st.columns((4,4), gap='small')
 
-        col_vol = st.columns((4,4), gap='small')
+            with col_inner[0]:
+                oi_hist = create_oi_hists(calls, puts, ATM)
+                st.plotly_chart(oi_hist)
 
-        # plot IV bar chart (overlap calls and puts)
-        with col_vol[0]:
-            iv_smile = create_iv_smile(calls, puts, ATM)
-            st.plotly_chart(iv_smile)
+            with col_inner[1]:
+                vol_hists = create_vol_hists(calls, puts, ATM)
+                st.plotly_chart(vol_hists)
 
-        # volatility surface
-        with col_vol[1]:
-            show_calls = st.checkbox("Calls", 
-                                    value=True, 
-                                    key='volatility_surface_calls',
-                                    help='Show surface for calls (checked) or puts (unchecked)')
-            
-            if show_calls:
-                surface_fig = plot_surface(df_calls_dict, expiration_dates)
-            else:
-                surface_fig = plot_surface(df_puts_dict, expiration_dates)
-            st.plotly_chart(surface_fig, use_container_width=True)
+            col_vol = st.columns((4,4), gap='small')
 
-        # add the chart widget
-        st.write(f"#### Underlying Price Chart") 
-        st.components.v1.html(tv_advanced_plot, height=400)
+            # plot IV bar chart (overlap calls and puts)
+            with col_vol[0]:
+                iv_smile = create_iv_smile(calls, puts, ATM)
+                st.plotly_chart(iv_smile)
+
+            # volatility surface
+            with col_vol[1]:
+                show_calls = st.checkbox("Calls", 
+                                        value=True, 
+                                        key='volatility_surface_calls',
+                                        help='Show surface for calls (checked) or puts (unchecked)')
+                
+                if show_calls:
+                    surface_fig = plot_surface(df_calls_dict, expiration_dates)
+                else:
+                    surface_fig = plot_surface(df_puts_dict, expiration_dates)
+                st.plotly_chart(surface_fig, use_container_width=True)
+
+            # add the chart widget
+            st.write(f"#### Underlying Price Chart") 
+            st.components.v1.html(tv_advanced_plot, height=400)
 
 # call main
 main()
