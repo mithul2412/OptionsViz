@@ -87,8 +87,6 @@ def calc_unusual_table(df_full_chain, show_itm=False, oi_min=1_000):
     df_full_chain_calls = df_full_chain_calls.reset_index(drop=True)
     return df_full_chain_calls
 
-########################################################################################################################
-
 ticker_cols = st.columns((3,4), gap='small')
 
 with ticker_cols[0]:
@@ -345,12 +343,10 @@ if ticker is not None:
         )
         st.plotly_chart(fig2)
 
-        ################################################
-
     col_vol = st.columns((4,4), gap='small')
 
+    # plot IV bar chart (overlap calls and puts)
     with col_vol[0]:
-        # plot IV bar chart (overlap calls and puts)
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=calls.strike, y=calls['impliedVolatility']*100,
                                   mode='lines+markers', name='Call IV', line=dict(color='#00C66B')))
@@ -362,8 +358,10 @@ if ticker is not None:
 
     # volatility surface
     with col_vol[1]:
-        show_calls = st.checkbox("Calls", value=True, key='volatility_surface_calls',
-                                help='Show surface for calls (checked) or puts (unchecked)')
+        show_calls = st.checkbox("Calls", 
+                                 value=True, 
+                                 key='volatility_surface_calls',
+                                 help='Show surface for calls (checked) or puts (unchecked)')
         
         if show_calls:
             surface_fig = plot_surface(df_full_chain_calls_dict, expiration_dates)
