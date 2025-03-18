@@ -14,6 +14,43 @@ from eod_chain import (
 
 class TestUtils(unittest.TestCase):
 
+
+    def test_get_data_invalid(self):
+        '''
+        tests INVALID ticker data return and type check
+        
+        '''
+        ticker = 'dwakdjawdnawo'
+        df_calls_dict, df_puts_dict, df_calls, \
+                df_puts, expiration_dates, ATM, \
+                     valid_ticker = get_data(ticker)
+        
+        self.assertFalse(valid_ticker)
+        self.assertIsNone(df_calls_dict)
+        self.assertIsNone(df_puts_dict)
+        self.assertIsNone(df_calls)
+        self.assertIsNone(df_puts)
+        self.assertIsNone(expiration_dates)
+        self.assertIsNone(ATM)
+
+    def test_get_data_valid(self):
+        '''
+        tests valid ticker data return and type check
+        
+        '''
+        ticker = 'AAPL'
+        df_calls_dict, df_puts_dict, df_calls, \
+                df_puts, expiration_dates, ATM, \
+                     valid_ticker = get_data(ticker)
+                
+        self.assertTrue(valid_ticker)
+        self.assertIsInstance(df_calls_dict, dict)
+        self.assertIsInstance(df_puts_dict, dict)
+        self.assertIsInstance(df_calls, pd.DataFrame)
+        self.assertIsInstance(df_puts, pd.DataFrame)
+        self.assertIsInstance(expiration_dates, list)
+        self.assertIsInstance(ATM, float)
+
     # def test_iv_smile(self):
 
     # def test_vol_hist(self):
@@ -22,7 +59,20 @@ class TestUtils(unittest.TestCase):
 
     # def test_plot_surface(self):
 
-    # def test_calc_unusual_table(self):
+    def test_calc_unusual_table(self):
+
+        ticker = 'AAPL'
+        df_calls_dict, df_puts_dict, df_calls, \
+                df_puts, expiration_dates, ATM, \
+                     valid_ticker = get_data(ticker)
+        
+        oi_min = 1000
+        df_full_chain_calls_proc = calc_unusual_table(df_calls, True, oi_min)
+        
+        self.assertIsInstance(df_full_chain_calls_proc, pd.DataFrame)
+        self.assertTrue(df_full_chain_calls_proc.shape[0] >= 1)
+        self.assertTrue('unusual_activity' in df_full_chain_calls_proc.columns)
+        self.assertTrue(df_full_chain_calls_proc.openInterest.values.min() >= oi_min)
 
     def test_generate_widgets(self):
         ticker = 'AAPL'
@@ -101,43 +151,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(remove_whitespace(single_ticker_widget), remove_whitespace(single_ticker_widget_truth))
         self.assertEqual(remove_whitespace(tech_perf), remove_whitespace(tech_perf_truth))
         self.assertEqual(remove_whitespace(tv_advanced_plot), remove_whitespace(tv_advanced_plot_truth))
-
-
-    def test_get_data_valid(self):
-        '''
-        tests valid ticker data return and type check
         
-        '''
-        ticker = 'AAPL'
-        df_calls_dict, df_puts_dict, df_calls, \
-                df_puts, expiration_dates, ATM, \
-                     valid_ticker = get_data(ticker)
-        
-        self.assertTrue(valid_ticker)
-        self.assertIsInstance(df_calls_dict, dict)
-        self.assertIsInstance(df_puts_dict, dict)
-        self.assertIsInstance(df_calls, pd.DataFrame)
-        self.assertIsInstance(df_puts, pd.DataFrame)
-        self.assertIsInstance(expiration_dates, list)
-        self.assertIsInstance(ATM, float)
-        
-    def test_get_data_invalid(self):
-        '''
-        tests INVALID ticker data return and type check
-        
-        '''
-        ticker = 'dwakdjawdnawo'
-        df_calls_dict, df_puts_dict, df_calls, \
-                df_puts, expiration_dates, ATM, \
-                     valid_ticker = get_data(ticker)
-        
-        self.assertFalse(valid_ticker)
-        self.assertIsNone(df_calls_dict)
-        self.assertIsNone(df_puts_dict)
-        self.assertIsNone(df_calls)
-        self.assertIsNone(df_puts)
-        self.assertIsNone(expiration_dates)
-        self.assertIsNone(ATM)
+ 
 
 
 if __name__ == '__main__':
