@@ -5,7 +5,22 @@ import yfinance as yf
 import plotly.graph_objects as go
 
 @st.cache_data()
-def create_iv_smile(calls, puts, ATM):
+def create_iv_smile(calls: pd.DataFrame, 
+                    puts: pd.DataFrame, 
+                    ATM: float) -> go.Figure:
+    
+
+    if not isinstance(calls, pd.DataFrame):
+        raise TypeError('calls must be a dataframe')
+    
+    if not isinstance(puts, pd.DataFrame):
+        raise TypeError('puts must be a dataframe')
+    
+    if not isinstance(ATM, float):
+        raise TypeError('ATM must be a float')
+    
+    if ATM < 0:
+        raise ValueError('ATM must be gte 0')
     
     call_iv = calls['impliedVolatility'].values
     call_iv[np.isnan(call_iv)] = 0.
@@ -34,12 +49,26 @@ def create_iv_smile(calls, puts, ATM):
     return fig
 
 @st.cache_data()
-def create_vol_hists(calls, puts, ATM):
+def create_vol_hists(calls: pd.DataFrame, 
+                     puts: pd.DataFrame, 
+                     ATM: float) -> go.Figure:
     '''
     create docstring here...
 
 
     '''
+    if not isinstance(calls, pd.DataFrame):
+        raise TypeError('calls must be a dataframe')
+    
+    if not isinstance(puts, pd.DataFrame):
+        raise TypeError('puts must be a dataframe')
+    
+    if not isinstance(ATM, float):
+        raise TypeError('ATM must be a float')
+    
+    if ATM < 0:
+        raise ValueError('ATM must be gte 0')
+    
     call_vol = calls.volume.values
     call_vol[np.isnan(call_vol)] = 0.
 
@@ -81,18 +110,32 @@ def create_vol_hists(calls, puts, ATM):
         yaxis_title="Volume",
         barmode="overlay",
         template="plotly_dark",
-        bargap=0.01,  # Control the gap between bars (smaller value = thicker bars)
-        bargroupgap=0.01, # Control the gap between groups of bars (if stacked or grouped),
+        bargap=0.01,
+        bargroupgap=0.01,
     )
     return fig
 
 @st.cache_data()
-def create_oi_hists(calls, puts, ATM):
+def create_oi_hists(calls: pd.DataFrame, 
+                    puts: pd.DataFrame, 
+                    ATM: float) -> go.Figure:
     '''
     create docstring here...
 
 
     '''
+    if not isinstance(calls, pd.DataFrame):
+        raise TypeError('calls must be a dataframe')
+    
+    if not isinstance(puts, pd.DataFrame):
+        raise TypeError('puts must be a dataframe')
+    
+    if not isinstance(ATM, float):
+        raise TypeError('ATM must be a float')
+    
+    if ATM < 0:
+        raise ValueError('ATM must be gte 0')
+
     max_oi = np.maximum(calls.openInterest.values.max(), puts.openInterest.values.max())
 
     fig = go.Figure()
@@ -134,12 +177,24 @@ def create_oi_hists(calls, puts, ATM):
     return fig
 
 @st.cache_data()
-def plot_surface(df_full_chain_side_dict, 
-                    expiration_dates):
+def plot_surface(df_full_chain_side_dict: dict,
+                 expiration_dates: list) -> go.Figure:
     """
     add docstring here
     
     """
+    if len(expiration_dates) == 0:
+        raise ValueError('Expiration dates is empty.')
+    
+    if len(list(df_full_chain_side_dict.keys())) == 0:
+        raise ValueError('Chain dataframes contains no keys, is empty.')
+
+    if not isinstance(df_full_chain_side_dict, dict):
+        raise TypeError('Enter a dictionary for df_full_chain_side_dict input arg')
+    
+    if not isinstance(expiration_dates, list):
+        raise TypeError('Enter a list for expiration_dates input arg')
+
     xs, ys_calls, zs_calls = [], [], []
     for e in expiration_dates:
         xs.append(e)
@@ -195,11 +250,25 @@ def plot_surface(df_full_chain_side_dict,
     return fig
 
 @st.cache_data()
-def calc_unusual_table(df_full_chain, show_itm=False, oi_min=1_000):
+def calc_unusual_table(df_full_chain: pd.DataFrame, 
+                       show_itm: bool = True,
+                       oi_min: int = 1_000) -> pd.DataFrame:
     """
     add docstring here
     
-    """
+    """    
+    if oi_min < 0:
+        raise ValueError('oi_min must be greater than or equal to zero.')
+
+    if not isinstance(df_full_chain, pd.DataFrame):
+        raise TypeError('df_full_chain must be a dataframe')
+    
+    if not isinstance(show_itm, bool):
+        raise TypeError('show_itm must be a boolean')
+    
+    if not isinstance(oi_min, int):
+        raise TypeError('oi_min must be an integer')
+    
     df_full_chain_calls = df_full_chain.copy()
 
     df_full_chain_calls = df_full_chain_calls[df_full_chain_calls.volume != 0.]
@@ -225,7 +294,7 @@ def calc_unusual_table(df_full_chain, show_itm=False, oi_min=1_000):
     return df_full_chain_calls
 
 @st.cache_data()
-def generate_widgets(ticker):
+def generate_widgets(ticker: str):
     """
     add docstring here
     
@@ -299,7 +368,7 @@ def generate_widgets(ticker):
     return single_ticker_widget, tech_perf, tv_advanced_plot
 
 @st.cache_data()
-def get_data(ticker):
+def get_data(ticker: str):
     '''
     get data
     
