@@ -307,18 +307,15 @@ def plot_surface(chains: dict,
     if not isinstance(expiration_dates, list):
         raise TypeError('Enter a list for expiration_dates input arg')
 
-    x_s, ys_calls, zs_calls = [], [], []
+    ys_calls, zs_calls = [], []
     for expiration in expiration_dates:
-        x_s.append(expiration)
-        calls_e = chains[expiration]
-        if len(calls_e) > 0:
-            ys_calls.append(list(calls_e.strike.values))
-            zs_calls.append(list(calls_e['impliedVolatility'].values * 100.))
+        if len(chains[expiration]) > 0:
+            ys_calls.append(list(chains[expiration].strike.values))
+            zs_calls.append(list(chains[expiration]['impliedVolatility'].values * 100.))
 
-    unique_xs = np.arange(len(x_s))
     xs_matched, ys_matched, zs_matched = [], [], []
     for i, (y_c, z_c) in enumerate(zip(ys_calls, zs_calls)):
-        xs_matched.extend([unique_xs[i]]*len(y_c))
+        xs_matched.extend([np.arange(len(expiration_dates))[i]]*len(y_c))
         ys_matched.extend(y_c)
         zs_matched.extend(z_c)
 
@@ -328,35 +325,35 @@ def plot_surface(chains: dict,
             uniq_strikes[y_strike] = 1 if y_strike not \
                 in uniq_strikes else uniq_strikes[y_strike] + 1
 
-    reduced_strikes = np.array(list(uniq_strikes.keys()))\
-                        [np.array(list(uniq_strikes.values()))==len(x_s)]
-    x_filtered = np.array(xs_matched)[np.isin(ys_matched, reduced_strikes)]
-    y_filtered = np.array(ys_matched)[np.isin(ys_matched, reduced_strikes)]
-    z_filtered = np.array(zs_matched)[np.isin(ys_matched, reduced_strikes)]
+    uniq_strikes = np.array(list(uniq_strikes.keys()))\
+                        [np.array(list(uniq_strikes.values()))==len(expiration_dates)]
+    xs_matched = np.array(xs_matched)[np.isin(ys_matched, uniq_strikes)]
+    ys_matched = np.array(ys_matched)[np.isin(ys_matched, uniq_strikes)]
+    zs_matched = np.array(zs_matched)[np.isin(ys_matched, uniq_strikes)]
 
-    fig = go.Figure(data=[go.Surface(z=z_filtered.reshape((len(ys_calls),reduced_strikes.shape[0])),
-                                    x=x_filtered.reshape((len(ys_calls),reduced_strikes.shape[0])),
-                                    y=y_filtered.reshape((len(ys_calls),reduced_strikes.shape[0])),
+    fig = go.Figure(data=[go.Surface(z=zs_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
+                                    x=xs_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
+                                    y=ys_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
                                     cmin=0,
-                                    cmax=z_filtered.max()+10)])
+                                    cmax=zs_matched.max()+10)])
 
     fig.update_layout(
-        title=dict(text='Volatility Surface'),
+        title={'text':'Volatility Surface'},
         autosize=True,
         width=500,
         height=500,
-        scene=dict(
-            xaxis_title='Expiration Date',
-            yaxis_title='Strike Price ($)',
-            zaxis_title='IV (%)',
-            xaxis = dict(
-                        tickmode='array',
-                        tickvals = x_filtered.reshape((len(ys_calls),
-                                                       reduced_strikes.shape[0]))[:,0][::2],
-                        ticktext = x_s[::2],
-                        tickfont={'size':10}
-                        ),
-        ),
+        scene={
+            'xaxis_title':'Expiration Date',
+            'yaxis_title':'Strike Price ($)',
+            'zaxis_title':'IV (%)',
+            'xaxis':{
+                    'tickmode': 'array',
+                    'tickvals': xs_matched.reshape((len(ys_calls),
+                                                       uniq_strikes.shape[0]))[:,0][::2],
+                    'ticktext' : expiration_dates[::2],
+                    'tickfont':{'size':10}
+            },
+        },
     )
     return fig
 
@@ -628,8 +625,7 @@ def process_ticker(ticker: str, ticker_cols: list):
         st.divider()
         st.write("#### Unusual Options Activity")
 
-        col_activity = st.columns((4,4), gap='small')
-        display_unusual_activity(col_activity, df_calls, df_puts)
+        display_unusual_activity(st.columns((4,4), gap='small'), df_calls, df_puts)
 
         st.divider()
         st.write("#### Chain Analysis")
@@ -643,9 +639,13 @@ def process_ticker(ticker: str, ticker_cols: list):
         calls = calls.sort_values(by='strike')
         puts = puts.sort_values(by='strike')
 
-        col_inner = st.columns((4,4), gap='small')
-        display_chain_analysis(col_inner, calls, puts, atm,
-                               df_calls_dict, df_puts_dict, expiration_dates)
+        display_chain_analysis(col_inner=st.columns((4,4), gap='small'),
+                               calls=calls,
+                               puts=puts,
+                               atm=atm,
+                               df_calls_dict=df_calls_dict,
+                               df_puts_dict=df_puts_dict,
+                               expiration_dates=expiration_dates)
 
         st.write("#### Underlying Price Chart")
         st.components.v1.html(tv_advanced_plot, height=400)
@@ -740,9 +740,7 @@ def style_unusual_activity(df_full_chain_proc):
         return [color] * len(row)
     return df_full_chain_proc.style.apply(colorize_rows, axis=1)
 
-def display_chain_analysis(col_inner, calls, puts, atm,
-                           df_calls_dict, df_puts_dict,
-                            expiration_dates):
+def display_chain_analysis(**kwargs):
     """
     Function: display_chain_analysis
 
@@ -752,15 +750,16 @@ def display_chain_analysis(col_inner, calls, puts, atm,
         calls and puts, the atm strike price, and the expiration dates.
 
     Parameters:
-        col_inner (list): List of columns for the Streamlit app.
-        calls (pd.DataFrame): DataFrame containing call options data.
-        puts (pd.DataFrame): DataFrame containing put options data.
-        atm (float): The atm strike price.
-        df_calls_dict (dict): Dictionary containing call options dataframes
-            based on expiration date (key).
-        df_puts_dict (dict): Dictionary containing put options dataframes
-            based on expiration date (key).
-        expiration_dates (list): List of expiration dates (list of strings).
+        kwargs (dict): Dictionary containing the following keys:
+            col_inner (list): List of columns for the Streamlit app.
+            calls (pd.DataFrame): DataFrame containing call options data.
+            puts (pd.DataFrame): DataFrame containing put options data.
+            atm (float): The atm strike price.
+            df_calls_dict (dict): Dictionary containing call options dataframes
+                based on expiration date (key).
+            df_puts_dict (dict): Dictionary containing put options dataframes
+                based on expiration date (key).
+            expiration_dates (list): List of expiration dates (list of strings).
     
     Returns:
         None
@@ -769,15 +768,25 @@ def display_chain_analysis(col_inner, calls, puts, atm,
         None
 
     Example:
-        col_inner = [col1, col2]
-        calls = pd.DataFrame(...)
-        puts = pd.DataFrame(...)
-        atm = 150.0
-        df_calls_dict = {...}
-        df_puts_dict = {...}
-        expiration_dates = ["2025-02-28", "2025-03-01"]
-        display_chain_analysis(col_inner, calls, puts, atm, df_calls_dict, df_puts_dict, expiration_dates)
+        kwargs = {
+            "col_inner": [col1, col2],
+            "calls": pd.DataFrame(...),
+            "puts": pd.DataFrame(...),
+            "atm": 150.0,
+            "df_calls_dict": {...},
+            "df_puts_dict": {...},
+            "expiration_dates": ["2025-02-28", "2025-03-01"]
+        }
+        display_chain_analysis(**kwargs)
     """
+    col_inner = kwargs.get('col_inner')
+    calls = kwargs.get('calls')
+    puts = kwargs.get('puts')
+    atm = kwargs.get('atm')
+    df_calls_dict = kwargs.get('df_calls_dict')
+    df_puts_dict = kwargs.get('df_puts_dict')
+    expiration_dates = kwargs.get('expiration_dates')
+
     with col_inner[0]:
         oi_hist = create_oi_hists(calls, puts, atm)
         st.plotly_chart(oi_hist)
