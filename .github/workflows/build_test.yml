@@ -41,9 +41,9 @@ jobs:
     # GitHub will run the tests for each of these Python versions.
     strategy:
       matrix:
-        python-version: ["3.9"] #, "3.10", "3.11"]
+        python-version: ["3.9.20"]
 
-    # The actual workflow steps!
+    # The actual workflow steps
     steps:
       # First, check out the repository for the current branch.
       - uses: actions/checkout@v3
@@ -67,7 +67,7 @@ jobs:
           # Whether you want conda to automatically update the conda
           # version (helpful when some runners have old versions of
           # conda)
-          auto-update-conda: false #true
+          auto-update-conda: false
           # Which version of python you want conda to use
           python-version: ${{ matrix.python-version }}
           # We don't need the base environment, so don't activate it
@@ -80,6 +80,7 @@ jobs:
       # use locally).
       - name: Install additional development dependencies
         run: |
+          pip install .
           conda install --yes coverage
       
       # If there are any other steps in order for your tests to
@@ -96,9 +97,10 @@ jobs:
       # Next step: run pylint. Anything less than 10/10 will fail.
       #            Once we've covered pylint in lecture, uncomment
       #            the following lines.
-      # - name: Lint with pylint
-      #   run: |
-      #     pylint entropy/**/*.py
+      - name: Lint with pylint
+        run: |
+          pylint optionsviz/*.py
+          pylint optionsviz/**/*.py
 
       # Lastly: report code coverage to Coveralls.
       - name: Report code coverage to Coveralls

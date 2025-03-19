@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import numpy as np
 import pandas as pd
-from options_viz import (
+from strategy import (
     get_stock_data,
     get_option_data,
     long_call,
@@ -17,7 +17,6 @@ from options_viz import (
     bear_put_spread,
     plot_strategy
 )
-
 
 class TestOptionTradingStrategy(unittest.TestCase):
 
