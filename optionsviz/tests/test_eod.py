@@ -35,25 +35,27 @@ class TestEODMethods(unittest.TestCase):
     Class: TestEODMethods
 
     Description:
-        Tests the knn_regression functionality to ensure that all calculations operate
-        as intended and all errors are raised properly.
+        Tests the functionality of the EOD streamlit page.
 
     Methods:
-        test_n_neighbors_type
-        test_data_type
-        test_n_value
-        test_numcols
-        test_dim_mismatch
-        test_data_dim
-        test_approx_equal1
-        test_approx_equal2
-        test_approx_equal3
+        test_get_data_invalid: Tests the get_data function with an invalid ticker.
+        test_get_data_valid: Tests the get_data function with a valid ticker.
+        test_iv_smile: Tests the create_iv_smile function with valid data.
+        test_iv_smile_invalid: Tests the create_iv_smile function with invalid data.
+        test_vol_hist: Tests the create_vol_hists function with valid data.
+        test_vol_hist_invalid: Tests the create_vol_hists function with invalid data.
+        test_oi_hist: Tests the create_oi_hists function with valid data.
+        test_oi_hist_invalid: Tests the create_oi_hists function with invalid data.
+        test_plot_surface_valid: Tests the plot_surface function with valid data.
+        test_plot_surface_invalid: Tests the plot_surface function with invalid data.
+        test_calc_unusual_table: Tests the calc_unusual_table function with valid data.
+        test_calc_unusual_table_invalid: Tests the calc_unusual_table function with invalid data.
+        test_generate_widgets: Tests the generate_widgets function with valid data.
     """
 
     def test_get_data_invalid(self):
         '''
-        This test evaluates if
-        
+        Tests the get_data function with an invalid ticker.
         '''
         ticker = 'dwakdjawdnawo'
         df_calls_dict, df_puts_dict, df_calls, \
@@ -70,8 +72,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_get_data_valid(self):
         '''
-        This test evaluates if
-        
+        Tests the get_data function with a valid ticker.
         '''
         ticker = 'AAPL'
         df_calls_dict, df_puts_dict, df_calls, \
@@ -88,7 +89,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_iv_smile(self):
         '''
-        This test evaluates if
+        Tests the create_iv_smile function with valid data.
         '''
         ticker = 'AAPL'
         df_calls_dict, df_puts_dict, _, \
@@ -103,7 +104,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_iv_smile_invalid(self):
         '''
-        This test evaluates if
+        Tests the create_iv_smile function with invalid data.
         '''
         self.assertRaises(TypeError, create_iv_smile, [], pd.DataFrame([]), 150.)
         self.assertRaises(TypeError, create_iv_smile,  pd.DataFrame([]), [], 150.)
@@ -114,7 +115,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_vol_hist(self):
         '''
-        This test evaluates if
+        Tests the create_vol_hists function with valid data.
         '''
         ticker = 'AAPL'
         df_calls_dict, df_puts_dict, _, \
@@ -129,7 +130,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_vol_hist_invalid(self):
         '''
-        This test evaluates if
+        Tests the create_vol_hists function with invalid data.
         '''
         self.assertRaises(TypeError, create_vol_hists, [], pd.DataFrame([]), 150.)
         self.assertRaises(TypeError, create_vol_hists,  pd.DataFrame([]), [], 150.)
@@ -140,7 +141,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_oi_hist(self):
         '''
-        This test evaluates if
+        Tests the create_oi_hists function with valid data.
         '''
         ticker = 'AAPL'
         df_calls_dict, df_puts_dict, _, \
@@ -155,7 +156,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_oi_hist_invalid(self):
         '''
-        This test evaluates if
+        Tests the create_oi_hists function with invalid data.
         '''
         self.assertRaises(TypeError, create_oi_hists, [], pd.DataFrame([]), 150.)
         self.assertRaises(TypeError, create_oi_hists,  pd.DataFrame([]), [], 150.)
@@ -166,7 +167,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_plot_surface_valid(self):
         '''
-        This test evaluates if
+        Tests the plot_surface function with valid data.
         '''
         ticker = 'AAPL'
         df_calls_dict, _, _, \
@@ -178,7 +179,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_plot_surface_invalid(self):
         '''
-        This test evaluates if
+        Tests the plot_surface function with invalid data.
         '''
         ticker = 'AAPL'
         df_calls_dict, _, _, \
@@ -195,7 +196,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_calc_unusual_table(self):
         '''
-        This test evaluates if
+        Tests the calc_unusual_table function with valid data.
         '''
         ticker = 'AAPL'
         _, _, df_calls, \
@@ -212,7 +213,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_calc_unusual_table_invalid(self):
         '''
-        This test evaluates if
+        Tests the calc_unusual_table function with invalid data. 
         '''
         ticker = 'AAPL'
         _, _, df_calls, \
@@ -226,7 +227,8 @@ class TestEODMethods(unittest.TestCase):
 
     def test_generate_widgets(self):
         '''
-        This test evaluates if
+        Tests the generate_widgets function with valid data. Creates a widget for a given ticker
+        by generating the HTML string and checking if the output matches the expected output.
         '''
         ticker = 'AAPL'
 
