@@ -328,8 +328,8 @@ def plot_surface(chains: dict,
     uniq_strikes = np.array(list(uniq_strikes.keys()))\
                         [np.array(list(uniq_strikes.values()))==len(expiration_dates)]
     xs_matched = np.array(xs_matched)[np.isin(ys_matched, uniq_strikes)]
-    ys_matched = np.array(ys_matched)[np.isin(ys_matched, uniq_strikes)]
     zs_matched = np.array(zs_matched)[np.isin(ys_matched, uniq_strikes)]
+    ys_matched = np.array(ys_matched)[np.isin(ys_matched, uniq_strikes)]
 
     fig = go.Figure(data=[go.Surface(z=zs_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
                                     x=xs_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
@@ -540,15 +540,15 @@ def get_data(ticker: str):
         print(calls, puts, expiration_dates, underlying_price, valid_ticker)
     """
     # get option chain and proc
-    yfticker = yf.Ticker(ticker)
-    expiration_dates = list(yfticker.options)
     df_full_chain_calls_dict=None
     df_full_chain_puts_dict=None
     df_full_chain_calls=None
     df_full_chain_puts=None
-    expiration_dates=[]
     money_level=None
     valid_ticker=False
+
+    yfticker = yf.Ticker(ticker)
+    expiration_dates = list(yfticker.options)
 
     if len(expiration_dates) > 0:
 
@@ -556,6 +556,7 @@ def get_data(ticker: str):
                             underlying['regularMarketPrice'])
 
         # show unusual activity table
+        valid_ticker=True
         df_full_chain_calls = None
         df_full_chain_puts = None
         df_full_chain_calls_dict = {}

@@ -144,8 +144,8 @@ class TestOptionTradingStrategy(unittest.TestCase):
 
     @patch('streamlit.error')
     @patch('streamlit.plotly_chart')
-    @patch('options_viz.get_stock_data')
-    @patch('options_viz.get_option_data')
+    @patch('strategy.get_stock_data')
+    @patch('strategy.get_option_data')
     def test_plot_strategy(self, mock_get_option_data, mock_get_stock_data, mock_plotly_chart, mock_error):
         # Mock the functions that fetch data
         mock_get_stock_data.return_value = pd.DataFrame({'Close': [160]})
