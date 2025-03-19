@@ -67,7 +67,7 @@ class TestEODMethods(unittest.TestCase):
         self.assertIsNone(df_puts_dict)
         self.assertIsNone(df_calls)
         self.assertIsNone(df_puts)
-        self.assertIsNone(expiration_dates)
+        self.assertTrue(expiration_dates==[])
         self.assertIsNone(atm)
 
     def test_get_data_valid(self):
