@@ -788,6 +788,27 @@ def display_chain_analysis(**kwargs):
     df_puts_dict = kwargs.get('df_puts_dict')
     expiration_dates = kwargs.get('expiration_dates')
 
+    if not isinstance(col_inner, list):
+        raise TypeError('col_inner must be a list')
+
+    if not isinstance(calls, pd.DataFrame):
+        raise TypeError('calls must be a dataframe')
+
+    if not isinstance(puts, pd.DataFrame):
+        raise TypeError('puts must be a dataframe')
+
+    if not isinstance(atm, float):
+        raise TypeError('atm must be a float')
+
+    if not isinstance(df_calls_dict, dict):
+        raise TypeError('df_calls_dict must be a dictionary')
+
+    if not isinstance(df_puts_dict, dict):
+        raise TypeError('df_puts_dict must be a dictionary')
+
+    if not isinstance(expiration_dates, list):
+        raise TypeError('expiration_dates must be a list')
+
     with col_inner[0]:
         oi_hist = create_oi_hists(calls, puts, atm)
         st.plotly_chart(oi_hist)
@@ -813,6 +834,8 @@ def display_chain_analysis(**kwargs):
         else:
             surface_fig = plot_surface(df_puts_dict, expiration_dates)
         st.plotly_chart(surface_fig, use_container_width=True)
+
+    return True
 
 def main():
     """

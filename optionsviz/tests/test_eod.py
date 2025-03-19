@@ -19,6 +19,7 @@ import unittest
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+import streamlit as st
 
 from eod_chain import (
     create_iv_smile,
@@ -27,7 +28,8 @@ from eod_chain import (
     plot_surface,
     calc_unusual_table,
     generate_widgets,
-    get_data
+    get_data,
+    display_chain_analysis
 )
 
 class TestEODMethods(unittest.TestCase):
@@ -53,6 +55,35 @@ class TestEODMethods(unittest.TestCase):
         test_generate_widgets: Tests the generate_widgets function with valid data.
     """
 
+    def test_display_chain_analysis(self):
+        '''
+        Tests the display_chain_analysis function with valid data.
+        '''
+        ticker = 'AAPL'
+        df_calls_dict, df_puts_dict, _, \
+                _, expiration_dates, atm, \
+                     _ = get_data(ticker)
+
+        calls = df_calls_dict[expiration_dates[0]]
+        puts = df_puts_dict[expiration_dates[0]]
+        atm = 150.
+        col_inner = st.columns(2)
+
+        res = display_chain_analysis(col_inner=col_inner,
+                               calls=calls,
+                               puts=puts,
+                               atm=atm,
+                               df_calls_dict=df_calls_dict,
+                               df_puts_dict=df_puts_dict,
+                               expiration_dates=expiration_dates)
+        self.assertTrue(res)
+
+    def test_display_chain_analysis_invalid(self):
+        '''
+        Tests the display_chain_analysis function with invalid data.
+        '''
+        self.assertRaises(TypeError, display_chain_analysis, col_inner=np.array([]))
+
     def test_get_data_invalid(self):
         '''
         Tests the get_data function with an invalid ticker.
@@ -67,7 +98,7 @@ class TestEODMethods(unittest.TestCase):
         self.assertIsNone(df_puts_dict)
         self.assertIsNone(df_calls)
         self.assertIsNone(df_puts)
-        self.assertTrue(expiration_dates==[])
+        self.assertTrue(not expiration_dates)
         self.assertIsNone(atm)
 
     def test_get_data_valid(self):
@@ -203,7 +234,7 @@ class TestEODMethods(unittest.TestCase):
                 _, _, _, \
                      _ = get_data(ticker)
 
-        oi_min = 1000
+        oi_min = 1
         df_full_chain_calls_proc = calc_unusual_table(df_calls, True, oi_min)
 
         self.assertIsInstance(df_full_chain_calls_proc, pd.DataFrame)
