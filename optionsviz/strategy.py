@@ -1,5 +1,20 @@
-"""Option trading strategy visualization tool using yfinance, plotly, and streamlit."""
+"""
+Module Name: strategy.py
 
+Description:
+    This module serves as the streamlit options strategy visualization page. 
+    It fetches stock and option data, calculates profit/loss for various option strategies, 
+    and plots the results using Streamlit and Plotly.
+
+Author:
+    Julian Sanders
+
+Created:
+    March 2025
+
+License:
+    MIT
+"""
 import yfinance as yf
 import plotly.graph_objects as go
 import numpy as np

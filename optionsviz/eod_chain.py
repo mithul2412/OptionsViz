@@ -1,3 +1,20 @@
+"""
+Module Name: eod_chain.py
+
+Description:
+    This module serves as the streamlit end-of-day (EOD) options chain visualization page. 
+    It provides functionality to visualize options data, including implied volatility,
+    volume, open interest, and unusual activity.
+
+Author:
+    Ryan J Richards
+
+Created:
+    Feb 2025
+
+License:
+    MIT
+"""
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -5,23 +22,45 @@ import yfinance as yf
 import plotly.graph_objects as go
 
 @st.cache_data()
-def create_iv_smile(calls: pd.DataFrame, 
-                    puts: pd.DataFrame, 
-                    ATM: float) -> go.Figure:
+def create_iv_smile(calls: pd.DataFrame,
+                    puts: pd.DataFrame,
+                    atm: float) -> go.Figure:
+    """
+    Function: create_iv_smile
     
-
+    Description:
+        The function creates a plotly figure showing the implied volatility smile for
+        call and put options. The function takes in dataframes for calls and puts,
+        and the atm (at-the-money) strike price. It returns a plotly figure object.
+    
+    Parameters:
+        calls (pd.DataFrame): DataFrame containing call options data.
+        puts (pd.DataFrame): DataFrame containing put options data.
+        atm (float): The atm strike price.
+        
+    Returns:
+        go.Figure: A plotly figure object containing the implied volatility smile.
+    
+    Raises:
+        TypeError: type is incorrect for any inputs
+        ValueError: invalid value for atm (less than 0)
+    
+    Example:
+        fig = create_iv_smile(calls, puts, atm)
+        fig.show()
+    """
     if not isinstance(calls, pd.DataFrame):
         raise TypeError('calls must be a dataframe')
-    
+
     if not isinstance(puts, pd.DataFrame):
         raise TypeError('puts must be a dataframe')
-    
-    if not isinstance(ATM, float):
-        raise TypeError('ATM must be a float')
-    
-    if ATM < 0:
-        raise ValueError('ATM must be gte 0')
-    
+
+    if not isinstance(atm, float):
+        raise TypeError('atm must be a float')
+
+    if atm < 0:
+        raise ValueError('atm must be gte 0')
+
     call_iv = calls['impliedVolatility'].values
     call_iv[np.isnan(call_iv)] = 0.
 
@@ -29,15 +68,19 @@ def create_iv_smile(calls: pd.DataFrame,
     put_iv[np.isnan(put_iv)] = 0.
 
     max_iv = np.maximum(call_iv.max(), put_iv.max())
-        
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=calls.strike, y=calls['impliedVolatility']*100,
-                                mode='lines+markers', name='Call IV', line=dict(color='#00C66B')))
+                                mode='lines+markers', name='Call IV',
+                                line={'color':'#00C66B'}
+                                ))
     fig.add_trace(go.Scatter(x=puts.strike, y=puts['impliedVolatility']*100,
-                                mode='lines+markers', name='Put IV',  line=dict(color='#D9534F')))
+                                mode='lines+markers', name='Put IV',
+                                line={'color':'#D9534F'}
+                                ))
     fig.add_shape(
         type="rect",
-        x0=0, x1=ATM,
+        x0=0, x1=atm,
         y0=0, y1=max_iv,
         fillcolor="#B39DDB",
         opacity=0.15,
@@ -49,26 +92,46 @@ def create_iv_smile(calls: pd.DataFrame,
     return fig
 
 @st.cache_data()
-def create_vol_hists(calls: pd.DataFrame, 
-                     puts: pd.DataFrame, 
-                     ATM: float) -> go.Figure:
-    '''
-    create docstring here...
-
-
-    '''
+def create_vol_hists(calls: pd.DataFrame,
+                     puts: pd.DataFrame,
+                     atm: float) -> go.Figure:
+    """
+    Function: create_vol_hists
+    
+    Description:
+        The function creates a plotly figure showing the Volume based histograms for
+        call and put options. The function takes in dataframes for calls and puts,
+        and the atm (at-the-money) strike price. It returns a plotly figure object.
+    
+    Parameters:
+        calls (pd.DataFrame): DataFrame containing call options data.
+        puts (pd.DataFrame): DataFrame containing put options data.
+        atm (float): The atm strike price.
+        
+    Returns:
+        go.Figure: A plotly figure object containing the volume histograms
+         for calls and puts.
+    
+    Raises:
+        TypeError: type is incorrect for any inputs
+        ValueError: invalid value for atm (less than 0)
+    
+    Example:
+        fig = create_vol_hists(calls, puts, atm)
+        fig.show()
+    """
     if not isinstance(calls, pd.DataFrame):
         raise TypeError('calls must be a dataframe')
-    
+
     if not isinstance(puts, pd.DataFrame):
         raise TypeError('puts must be a dataframe')
-    
-    if not isinstance(ATM, float):
-        raise TypeError('ATM must be a float')
-    
-    if ATM < 0:
-        raise ValueError('ATM must be gte 0')
-    
+
+    if not isinstance(atm, float):
+        raise TypeError('atm must be a float')
+
+    if atm < 0:
+        raise ValueError('atm must be gte 0')
+
     call_vol = calls.volume.values
     call_vol[np.isnan(call_vol)] = 0.
 
@@ -96,7 +159,7 @@ def create_vol_hists(calls: pd.DataFrame,
 
     fig.add_shape(
         type="rect",
-        x0=0, x1=ATM,
+        x0=0, x1=atm,
         y0=0, y1=max_vol,
         fillcolor="#B39DDB",
         opacity=0.15,
@@ -116,25 +179,45 @@ def create_vol_hists(calls: pd.DataFrame,
     return fig
 
 @st.cache_data()
-def create_oi_hists(calls: pd.DataFrame, 
-                    puts: pd.DataFrame, 
-                    ATM: float) -> go.Figure:
-    '''
-    create docstring here...
-
-
-    '''
+def create_oi_hists(calls: pd.DataFrame,
+                    puts: pd.DataFrame,
+                    atm: float) -> go.Figure:
+    """
+    Function: create_oi_hists
+    
+    Description:
+        The function creates a plotly figure showing the Open Interest based histograms for
+        call and put options. The function takes in dataframes for calls and puts,
+        and the atm (at-the-money) strike price. It returns a plotly figure object.
+    
+    Parameters:
+        calls (pd.DataFrame): DataFrame containing call options data.
+        puts (pd.DataFrame): DataFrame containing put options data.
+        atm (float): The atm strike price.
+        
+    Returns:
+        go.Figure: A plotly figure object containing the Open Interest histograms
+         for calls and puts.
+    
+    Raises:
+        TypeError: type is incorrect for any inputs
+        ValueError: invalid value for atm (less than 0)
+    
+    Example:
+        fig = create_oi_hists(calls, puts, atm)
+        fig.show()
+    """
     if not isinstance(calls, pd.DataFrame):
         raise TypeError('calls must be a dataframe')
-    
+
     if not isinstance(puts, pd.DataFrame):
         raise TypeError('puts must be a dataframe')
-    
-    if not isinstance(ATM, float):
-        raise TypeError('ATM must be a float')
-    
-    if ATM < 0:
-        raise ValueError('ATM must be gte 0')
+
+    if not isinstance(atm, float):
+        raise TypeError('atm must be a float')
+
+    if atm < 0:
+        raise ValueError('atm must be gte 0')
 
     max_oi = np.maximum(calls.openInterest.values.max(), puts.openInterest.values.max())
 
@@ -146,7 +229,13 @@ def create_oi_hists(calls: pd.DataFrame,
         orientation='v',
         marker_color='#D9534F'
     ))
-
+    fig.add_trace(go.Bar(
+        x=puts['strike'],
+        y=puts['openInterest'],
+        name='Puts',
+        orientation='v',
+        marker_color='#D9534F'
+    ))
     fig.add_trace(go.Bar(
         x=calls['strike'],
         y=calls['openInterest'],
@@ -157,7 +246,7 @@ def create_oi_hists(calls: pd.DataFrame,
 
     fig.add_shape(
         type="rect",
-        x0=0, x1=ATM,
+        x0=0, x1=atm,
         y0=0, y1=max_oi,
         fillcolor="#B39DDB",
         opacity=0.15,
@@ -177,98 +266,137 @@ def create_oi_hists(calls: pd.DataFrame,
     return fig
 
 @st.cache_data()
-def plot_surface(df_full_chain_side_dict: dict,
+def plot_surface(chains: dict,
                  expiration_dates: list) -> go.Figure:
     """
-    add docstring here
+    Function: plot_surface
     
+    Description:
+        The function creates a plotly figure showing the Volatility Surface for
+        call or put option chains; this includes all shared strikes across all
+        expiration dates. The function takes in a dictionary of dataframes for
+        calls and puts, and a list of expiration dates. It returns a plotly figure object.
+
+    Parameters:
+        chains (dict): dictionary containing call or put options based on 
+            expiration date (key).
+        expiration_dates (list): list of expiration dates (list of strings).
+        
+    Returns:
+        go.Figure: A plotly figure object containing the Volatility Surface
+         for calls or puts.
+    
+    Raises:
+        TypeError: type is incorrect for any inputs
+        ValueError: invalid value for expiration_dates (empty) or 
+            chains (empty)
+    
+    Example:
+        fig = plot_surface(chains, expiration_dates)
+        fig.show()
     """
     if len(expiration_dates) == 0:
         raise ValueError('Expiration dates is empty.')
-    
-    if len(list(df_full_chain_side_dict.keys())) == 0:
+
+    if len(list(chains.keys())) == 0:
         raise ValueError('Chain dataframes contains no keys, is empty.')
 
-    if not isinstance(df_full_chain_side_dict, dict):
-        raise TypeError('Enter a dictionary for df_full_chain_side_dict input arg')
-    
+    if not isinstance(chains, dict):
+        raise TypeError('Enter a dictionary for chains input arg')
+
     if not isinstance(expiration_dates, list):
         raise TypeError('Enter a list for expiration_dates input arg')
 
-    xs, ys_calls, zs_calls = [], [], []
-    for e in expiration_dates:
-        xs.append(e)
-        calls_e = df_full_chain_side_dict[e]        
-        if len(calls_e) > 0:
-            ys_calls.append(list(calls_e.strike.values))
-            zs_calls.append(list(calls_e['impliedVolatility'].values * 100.))
+    ys_calls, zs_calls = [], []
+    for expiration in expiration_dates:
+        if len(chains[expiration]) > 0:
+            ys_calls.append(list(chains[expiration].strike.values))
+            zs_calls.append(list(chains[expiration]['impliedVolatility'].values * 100.))
 
-    unique_xs = np.arange(len(xs))
     xs_matched, ys_matched, zs_matched = [], [], []
-    for i, (y_, z_) in enumerate(zip(ys_calls, zs_calls)):
-        xs_matched.extend([unique_xs[i]]*len(y_))
-        ys_matched.extend(y_)
-        zs_matched.extend(z_)
-        
-    uniq_strikes = dict()
-    shared_strikes = []
-    for y in ys_calls:
-        for y_ in y:
-            if y_ not in uniq_strikes:
-                uniq_strikes[y_] = 1
-            else:
-                uniq_strikes[y_] += 1
-                
-    reduced_strikes = np.array(list(uniq_strikes.keys()))[np.array(list(uniq_strikes.values()))==len(xs)]
-    x_filtered = np.array(xs_matched)[np.isin(ys_matched, reduced_strikes)]
-    y_filtered = np.array(ys_matched)[np.isin(ys_matched, reduced_strikes)]
-    z_filtered = np.array(zs_matched)[np.isin(ys_matched, reduced_strikes)]
+    for i, (y_c, z_c) in enumerate(zip(ys_calls, zs_calls)):
+        xs_matched.extend([np.arange(len(expiration_dates))[i]]*len(y_c))
+        ys_matched.extend(y_c)
+        zs_matched.extend(z_c)
 
-    fig = go.Figure(data=[go.Surface(z=z_filtered.reshape((len(ys_calls),reduced_strikes.shape[0])), 
-                                    x=x_filtered.reshape((len(ys_calls),reduced_strikes.shape[0])), 
-                                    y=y_filtered.reshape((len(ys_calls),reduced_strikes.shape[0])),
-                                    cmin=0, 
-                                    cmax=z_filtered.max()+10)])
+    uniq_strikes = {}
+    for y_s in ys_calls:
+        for y_strike in y_s:
+            uniq_strikes[y_strike] = 1 if y_strike not \
+                in uniq_strikes else uniq_strikes[y_strike] + 1
+
+    uniq_strikes = np.array(list(uniq_strikes.keys()))\
+                        [np.array(list(uniq_strikes.values()))==len(expiration_dates)]
+    xs_matched = np.array(xs_matched)[np.isin(ys_matched, uniq_strikes)]
+    zs_matched = np.array(zs_matched)[np.isin(ys_matched, uniq_strikes)]
+    ys_matched = np.array(ys_matched)[np.isin(ys_matched, uniq_strikes)]
+
+    fig = go.Figure(data=[go.Surface(z=zs_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
+                                    x=xs_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
+                                    y=ys_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
+                                    cmin=0,
+                                    cmax=zs_matched.max()+10)])
 
     fig.update_layout(
-        title=dict(text='Volatility Surface'),
+        title={'text':'Volatility Surface'},
         autosize=True,
-        width=500, 
+        width=500,
         height=500,
-        scene=dict(
-            xaxis_title='Expiration Date',
-            yaxis_title='Strike Price ($)',
-            zaxis_title='IV (%)',
-            xaxis = dict(
-                        tickmode='array',
-                        tickvals = x_filtered.reshape((len(ys_calls),reduced_strikes.shape[0]))[:,0][::2],
-                        ticktext = xs[::2],
-                        tickfont={'size':10}
-                        ),
-        ),
+        scene={
+            'xaxis_title':'Expiration Date',
+            'yaxis_title':'Strike Price ($)',
+            'zaxis_title':'IV (%)',
+            'xaxis':{
+                    'tickmode': 'array',
+                    'tickvals': xs_matched.reshape((len(ys_calls),
+                                                       uniq_strikes.shape[0]))[:,0][::2],
+                    'ticktext' : expiration_dates[::2],
+                    'tickfont':{'size':10}
+            },
+        },
     )
     return fig
 
 @st.cache_data()
-def calc_unusual_table(df_full_chain: pd.DataFrame, 
+def calc_unusual_table(df_full_chain: pd.DataFrame,
                        show_itm: bool = True,
                        oi_min: int = 1_000) -> pd.DataFrame:
     """
-    add docstring here
+    Function: calc_unusual_table
+
+    Description:
+        This function calculates the unusual options activity table for a given
+        options chain dataframe. It filters the dataframe based on volume, open interest,
+        and unusual activity, and returns a styled dataframe.
+
+    Parameters:
+        df_full_chain (pd.DataFrame): DataFrame containing options chain data.
+        show_itm (bool): Flag to show in-the-money (ITM) contracts. Default is True.
+        oi_min (int): Minimum open interest to consider. Default is 1_000.    
     
-    """    
+    Returns:
+        pd.DataFrame: A styled dataframe containing the unusual options activity table.    
+    
+    Raises:
+        TypeError: type is incorrect for any inputs
+        ValueError: invalid value for oi_min (less than 0)
+    
+    Example:
+        df = calc_unusual_table(df_full_chain, show_itm, oi_min)
+        print(df)
+    """
     if oi_min < 0:
         raise ValueError('oi_min must be greater than or equal to zero.')
 
     if not isinstance(df_full_chain, pd.DataFrame):
         raise TypeError('df_full_chain must be a dataframe')
-    
+
     if not isinstance(show_itm, bool):
         raise TypeError('show_itm must be a boolean')
-    
+
     if not isinstance(oi_min, int):
         raise TypeError('oi_min must be an integer')
-    
+
     df_full_chain_calls = df_full_chain.copy()
 
     df_full_chain_calls = df_full_chain_calls[df_full_chain_calls.volume != 0.]
@@ -288,7 +416,7 @@ def calc_unusual_table(df_full_chain: pd.DataFrame,
                                             'lastPrice','spread','percentChange',
                                                 'volume','openInterest','impliedVolatility',
                                                 'unusual_activity']]
-    
+
     # Apply styling to whole row
     df_full_chain_calls = df_full_chain_calls.reset_index(drop=True)
     return df_full_chain_calls
@@ -296,10 +424,27 @@ def calc_unusual_table(df_full_chain: pd.DataFrame,
 @st.cache_data()
 def generate_widgets(ticker: str):
     """
-    add docstring here
+    Function: generate_widgets
+
+    Description:
+        This function generates the TradingView widgets for the given ticker.
+        It returns the HTML code for the widgets.
+
+    Parameters:
+        ticker (str): The stock ticker symbol.
     
+    Returns:
+        str: HTML code for the TradingView widgets.
+    
+    Raises:
+        nothing
+    
+    Example:
+        ticker = "AAPL"
+        widgets = generate_widgets(ticker)
+        print(widgets)
     """
-    
+
     single_ticker_widget = f'''
     <div class="tradingview-widget-container">
         <div class="tradingview-widget-container__widget"></div>
@@ -364,28 +509,58 @@ def generate_widgets(ticker: str):
             </script>
         </div>
         """
-        
+
     return single_ticker_widget, tech_perf, tv_advanced_plot
 
 @st.cache_data()
 def get_data(ticker: str):
-    '''
-    get data
+    """
+    Function: get_data
+
+    Description:
+        This function retrieves the options chain data for the given ticker.
+        It returns the options chain dataframes for calls and puts, the expiration
+        dates, and the underlying price.
+
+    Parameters:
+        ticker (str): The stock ticker symbol.
     
-    '''
+    Returns:
+        tuple: A tuple containing the options chain dataframes for calls and puts,
+            the expiration dates, the underlying price, and a boolean indicating
+            if the ticker is valid.
+    
+    Raises:
+        TypeError: type is incorrect for any inputs
+        ValueError: invalid value for ticker (empty)
+    
+    Example:
+        ticker = "AAPL"
+        calls, puts, expiration_dates, underlying_price, valid_ticker = get_data(ticker)
+        print(calls, puts, expiration_dates, underlying_price, valid_ticker)
+    """
     # get option chain and proc
+    df_full_chain_calls_dict=None
+    df_full_chain_puts_dict=None
+    df_full_chain_calls=None
+    df_full_chain_puts=None
+    money_level=None
+    valid_ticker=False
+
     yfticker = yf.Ticker(ticker)
     expiration_dates = list(yfticker.options)
 
-    if len(expiration_dates):
-    
-        money_level = float(yfticker.option_chain(expiration_dates[0]).underlying['regularMarketPrice'])
+    if len(expiration_dates) > 0:
+
+        money_level = float(yfticker.option_chain(expiration_dates[0]).\
+                            underlying['regularMarketPrice'])
 
         # show unusual activity table
+        valid_ticker=True
         df_full_chain_calls = None
         df_full_chain_puts = None
-        df_full_chain_calls_dict = dict()
-        df_full_chain_puts_dict = dict()
+        df_full_chain_calls_dict = {}
+        df_full_chain_puts_dict = {}
 
         for e in expiration_dates:
 
@@ -406,141 +581,294 @@ def get_data(ticker: str):
             # update master dicts
             df_full_chain_calls_dict[e] = calls
             df_full_chain_puts_dict[e] = puts
-
-        return df_full_chain_calls_dict, df_full_chain_puts_dict, \
-            df_full_chain_calls, df_full_chain_puts, expiration_dates, \
-                money_level, True
     else:
         st.error(f'Unable to find option chain for ticker: {ticker}', icon="🚨")
-        return None, None, None, None, None, None, False
+
+    return df_full_chain_calls_dict, df_full_chain_puts_dict, df_full_chain_calls, \
+        df_full_chain_puts, expiration_dates, money_level, valid_ticker
+
+def process_ticker(ticker: str, ticker_cols: list):
+    """
+    Function: process_ticker
+
+    Description:
+        This function processes the given ticker symbol, retrieves the options data,
+        generates widgets, and displays the options chain analysis.
+
+    Parameters:
+        ticker (str): The stock ticker symbol.
+        ticker_cols (list): List of columns for the Streamlit app.
+    
+    Returns:
+        None
+    
+    Raises:
+        None
+
+    Example:
+        ticker = "AAPL"
+        ticker_cols = [col1, col2]
+        process_ticker(ticker, ticker_cols)
+    """
+    df_calls_dict, df_puts_dict, df_calls, \
+            df_puts, expiration_dates, atm, \
+                valid_ticker = get_data(ticker)
+
+    if valid_ticker:
+        single_ticker_widget, tech_perf, tv_advanced_plot = generate_widgets(ticker)
+
+        with ticker_cols[1]:
+            st.components.v1.html(single_ticker_widget, height=100)
+
+        with st.sidebar:
+            st.components.v1.html(tech_perf, height=400)
+
+        st.divider()
+        st.write("#### Unusual Options Activity")
+
+        display_unusual_activity(st.columns((4,4), gap='small'), df_calls, df_puts)
+
+        st.divider()
+        st.write("#### Chain Analysis")
+
+        exp_date = st.selectbox(
+                "Select an expiration date",
+                expiration_dates,
+        )
+        calls = df_calls_dict[exp_date]
+        puts = df_puts_dict[exp_date]
+        calls = calls.sort_values(by='strike')
+        puts = puts.sort_values(by='strike')
+
+        display_chain_analysis(col_inner=st.columns((4,4), gap='small'),
+                               calls=calls,
+                               puts=puts,
+                               atm=atm,
+                               df_calls_dict=df_calls_dict,
+                               df_puts_dict=df_puts_dict,
+                               expiration_dates=expiration_dates)
+
+        st.write("#### Underlying Price Chart")
+        st.components.v1.html(tv_advanced_plot, height=400)
+
+def display_unusual_activity(col_activity, df_calls, df_puts):
+    """
+    Function: display_unusual_activity
+
+    Description:
+        This function displays the unusual options activity for calls and puts
+        in the Streamlit app. It takes in the columns for the app and the dataframes
+        for calls and puts.
+
+    Parameters:
+        col_activity (list): List of columns for the Streamlit app.
+        df_calls (pd.DataFrame): DataFrame containing call options data.
+        df_puts (pd.DataFrame): DataFrame containing put options data.
+    
+    Returns:
+        None
+    
+    Raises:
+        None
+
+    Example:
+        col_activity = [col1, col2]
+        df_calls = pd.DataFrame(...)
+        df_puts = pd.DataFrame(...)
+        display_unusual_activity(col_activity, df_calls, df_puts)
+    """
+    with col_activity[0]:
+        st.write("#### Calls")
+        oi_min_calls = st.number_input("Minumum OI", min_value=1,
+                                    key='oi_min_calls',
+                                    value=1_000,
+                                help='Minumum Open Interest to consider \
+                                    when computing unusual options activity.')
+        show_itm_calls = st.checkbox("Show ITM", value=False, key='show_itm',
+                            help='Only show in-the-money (ITM) contracts, \
+                                otherwise show only out-of-money.')
+        df_full_chain_calls_proc = calc_unusual_table(df_calls,
+                                                      show_itm_calls,
+                                                      oi_min_calls)
+        styled_df_calls = style_unusual_activity(df_full_chain_calls_proc)
+        st.dataframe(styled_df_calls)
+
+    with col_activity[1]:
+        st.write("#### Puts")
+        oi_min_puts = st.number_input("Minumum OI", min_value=1,
+                                    key='oi_min_puts',
+                                    value=1_000,
+                                    help='Minumum Open Interest to consider when \
+                                        computing unusual options activity.')
+        show_itm_puts = st.checkbox("Show ITM", value=False, key='show_itm_puts',
+                                    help='Only show in-the-money (ITM) contracts, \
+                                        otherwise show only out-of-money.')
+        df_full_chain_puts_proc = calc_unusual_table(df_puts, show_itm_puts, oi_min_puts)
+        styled_df_puts = style_unusual_activity(df_full_chain_puts_proc)
+        st.dataframe(styled_df_puts)
+
+def style_unusual_activity(df_full_chain_proc):
+    """
+    Function: style_unusual_activity
+
+    Description:
+        This function styles the unusual options activity dataframe for display
+        in the Streamlit app. It applies a color gradient to the rows based on
+        the unusual activity values (green to red for high to low activity).
+
+    Parameters:
+        df_full_chain_proc (pd.DataFrame): DataFrame containing the processed
+            unusual options activity data.
+    
+    Returns:
+        None
+    
+    Raises:
+        None
+
+    Example:
+        df_full_chain_proc = pd.DataFrame(...)
+        styled_df = style_unusual_activity(df_full_chain_proc)
+        print(styled_df)
+    """
+    def colorize_rows(row):
+        norm = (row.unusual_activity - \
+                df_full_chain_proc["unusual_activity"].min()) / \
+            (df_full_chain_proc["unusual_activity"].max() - \
+                df_full_chain_proc["unusual_activity"].min())
+        color = f'background-color: rgba({255 * (1 - norm)}, \
+            {255 * norm}, 0, 0.5)'
+        return [color] * len(row)
+    return df_full_chain_proc.style.apply(colorize_rows, axis=1)
+
+def display_chain_analysis(**kwargs):
+    """
+    Function: display_chain_analysis
+
+    Description:
+        This function displays the chain analysis for calls and puts in the
+        Streamlit app. It takes in the columns for the app, the dataframes for
+        calls and puts, the atm strike price, and the expiration dates.
+
+    Parameters:
+        kwargs (dict): Dictionary containing the following keys:
+            col_inner (list): List of columns for the Streamlit app.
+            calls (pd.DataFrame): DataFrame containing call options data.
+            puts (pd.DataFrame): DataFrame containing put options data.
+            atm (float): The atm strike price.
+            df_calls_dict (dict): Dictionary containing call options dataframes
+                based on expiration date (key).
+            df_puts_dict (dict): Dictionary containing put options dataframes
+                based on expiration date (key).
+            expiration_dates (list): List of expiration dates (list of strings).
+    
+    Returns:
+        None
+    
+    Raises:
+        None
+
+    Example:
+        kwargs = {
+            "col_inner": [col1, col2],
+            "calls": pd.DataFrame(...),
+            "puts": pd.DataFrame(...),
+            "atm": 150.0,
+            "df_calls_dict": {...},
+            "df_puts_dict": {...},
+            "expiration_dates": ["2025-02-28", "2025-03-01"]
+        }
+        display_chain_analysis(**kwargs)
+    """
+    col_inner = kwargs.get('col_inner')
+    calls = kwargs.get('calls')
+    puts = kwargs.get('puts')
+    atm = kwargs.get('atm')
+    df_calls_dict = kwargs.get('df_calls_dict')
+    df_puts_dict = kwargs.get('df_puts_dict')
+    expiration_dates = kwargs.get('expiration_dates')
+
+    if not isinstance(col_inner, list):
+        raise TypeError('col_inner must be a list')
+
+    if not isinstance(calls, pd.DataFrame):
+        raise TypeError('calls must be a dataframe')
+
+    if not isinstance(puts, pd.DataFrame):
+        raise TypeError('puts must be a dataframe')
+
+    if not isinstance(atm, float):
+        raise TypeError('atm must be a float')
+
+    if not isinstance(df_calls_dict, dict):
+        raise TypeError('df_calls_dict must be a dictionary')
+
+    if not isinstance(df_puts_dict, dict):
+        raise TypeError('df_puts_dict must be a dictionary')
+
+    if not isinstance(expiration_dates, list):
+        raise TypeError('expiration_dates must be a list')
+
+    with col_inner[0]:
+        oi_hist = create_oi_hists(calls, puts, atm)
+        st.plotly_chart(oi_hist)
+
+    with col_inner[1]:
+        vol_hists = create_vol_hists(calls, puts, atm)
+        st.plotly_chart(vol_hists)
+
+    col_vol = st.columns((4,4), gap='small')
+
+    with col_vol[0]:
+        iv_smile = create_iv_smile(calls, puts, atm)
+        st.plotly_chart(iv_smile)
+
+    with col_vol[1]:
+        show_calls = st.checkbox("Calls",
+                                value=True,
+                                key='volatility_surface_calls',
+                                help='Show surface for calls (checked) or puts (unchecked)')
+
+        if show_calls:
+            surface_fig = plot_surface(df_calls_dict, expiration_dates)
+        else:
+            surface_fig = plot_surface(df_puts_dict, expiration_dates)
+        st.plotly_chart(surface_fig, use_container_width=True)
+
+    return True
 
 def main():
-    '''
-    docstring here
+    """
+    Function: main
+
+    Description:
+        This is the main function, which serves as the entry point for the
+        Streamlit application. It initializes the app, sets the page configuration,
+        and handles user input for stock tickers. It retrieves options data, generates
+        widgets, and displays the options chain analysis.
+
+    Parameters:
+        None
     
-    '''
+    Returns:
+        None    
+    
+    Raises:
+        None    
+    
+    Example:
+        main()
+    """
     ticker_cols = st.columns((3,4), gap='small')
 
     with ticker_cols[0]:
-        ticker = st.text_input("Enter stock ticker:", value=None, placeholder='e.g. NVDA, AAPL, AMZN')
+        ticker = st.text_input("Enter stock ticker:",
+                               value=None,
+                               placeholder='e.g. NVDA, AAPL, AMZN')
 
     if ticker is not None:
-
         ticker = ticker.upper()
-
-        df_calls_dict, df_puts_dict, df_calls, \
-                df_puts, expiration_dates, ATM, \
-                     valid_ticker = get_data(ticker)
-        
-        if valid_ticker:
-
-            single_ticker_widget, tech_perf, tv_advanced_plot = generate_widgets(ticker)
-
-            with ticker_cols[1]:
-                st.components.v1.html(single_ticker_widget, height=100)
-            
-            with st.sidebar:
-                st.components.v1.html(tech_perf, height=400)
-
-            st.divider()
-            st.write(f"#### Unusual Options Activity")
-
-            col_activity = st.columns((4,4), gap='small')
-            with col_activity[0]:
-                
-                st.write(f"#### Calls") 
-                
-                oi_min_calls = st.number_input("Minumum OI", min_value=1, 
-                                            key='oi_min_calls',
-                                            value=1_000,
-                                        help='Minumum Open Interest to consider \
-                                            when computing unusual options activity.')
-                
-                show_itm_calls = st.checkbox("Show ITM", value=False, key='show_itm',
-                                    help='Only show in-the-money (ITM) contracts, \
-                                        otherwise show only out-of-money.')
-
-                df_full_chain_calls_proc = calc_unusual_table(df_calls, show_itm_calls, oi_min_calls)
-
-                def colorize_rows(row):
-                    norm = (row.unusual_activity - df_full_chain_calls_proc["unusual_activity"].min()) / \
-                        (df_full_chain_calls_proc["unusual_activity"].max() - \
-                            df_full_chain_calls_proc["unusual_activity"].min())
-                    color = f'background-color: rgba({255 * (1 - norm)}, \
-                        {255 * norm}, 0, 0.5)'
-                    return [color] * len(row)
-
-                styled_df_calls = df_full_chain_calls_proc.style.apply(colorize_rows, axis=1)
-                st.dataframe(styled_df_calls)
-
-            with col_activity[1]:
-                st.write(f"#### Puts") 
-                oi_min_puts = st.number_input("Minumum OI", min_value=1, 
-                                            key='oi_min_puts',
-                                            value=1_000,
-                                            help='Minumum Open Interest to consider when \
-                                                computing unusual options activity.')
-                show_itm_puts = st.checkbox("Show ITM", value=False, key='show_itm_puts',
-                                            help='Only show in-the-money (ITM) contracts, \
-                                                otherwise show only out-of-money.')
-                df_full_chain_puts_proc = calc_unusual_table(df_puts, show_itm_puts, oi_min_puts)
-                
-                def colorize_rows(row):
-                    norm = (row.unusual_activity - df_full_chain_puts_proc["unusual_activity"].min()) / \
-                        (df_full_chain_puts_proc["unusual_activity"].max() - \
-                            df_full_chain_puts_proc["unusual_activity"].min())
-                    color = f'background-color: rgba({255 * (1 - norm)}, \
-                        {255 * norm}, 0, 0.5)'
-                    return [color] * len(row)
-
-                styled_df_puts = df_full_chain_puts_proc.style.apply(colorize_rows, axis=1)
-                st.dataframe(styled_df_puts)
-
-            st.divider()
-            st.write(f"#### Chain Analysis")
-
-            exp_date = st.selectbox(
-                    "Select an expiration date",
-                    expiration_dates,
-            )        
-            calls = df_calls_dict[exp_date]
-            puts = df_puts_dict[exp_date]
-            calls = calls.sort_values(by='strike')
-            puts = puts.sort_values(by='strike')
-
-            col_inner = st.columns((4,4), gap='small')
-
-            with col_inner[0]:
-                oi_hist = create_oi_hists(calls, puts, ATM)
-                st.plotly_chart(oi_hist)
-
-            with col_inner[1]:
-                vol_hists = create_vol_hists(calls, puts, ATM)
-                st.plotly_chart(vol_hists)
-
-            col_vol = st.columns((4,4), gap='small')
-
-            # plot IV bar chart (overlap calls and puts)
-            with col_vol[0]:
-                iv_smile = create_iv_smile(calls, puts, ATM)
-                st.plotly_chart(iv_smile)
-
-            # volatility surface
-            with col_vol[1]:
-                show_calls = st.checkbox("Calls", 
-                                        value=True, 
-                                        key='volatility_surface_calls',
-                                        help='Show surface for calls (checked) or puts (unchecked)')
-                
-                if show_calls:
-                    surface_fig = plot_surface(df_calls_dict, expiration_dates)
-                else:
-                    surface_fig = plot_surface(df_puts_dict, expiration_dates)
-                st.plotly_chart(surface_fig, use_container_width=True)
-
-            # add the chart widget
-            st.write(f"#### Underlying Price Chart") 
-            st.components.v1.html(tv_advanced_plot, height=400)
+        process_ticker(ticker, ticker_cols)
 
 # call main
 main()

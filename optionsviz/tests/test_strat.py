@@ -1,8 +1,26 @@
+"""
+Module Name: test_strat.py
+
+Description:
+    This module contains a series of testing functions for the 
+    strategy streamlit app. It uses the unittest framework to
+    test the functionality of the option trading strategies
+    implemented in the strategy module.
+
+Author:
+    Julian Sanders
+
+Created:
+    March 2025
+
+License:
+    MIT
+"""
 import unittest
 from unittest.mock import patch, MagicMock
 import numpy as np
 import pandas as pd
-from options_viz import (
+from strategy import (
     get_stock_data,
     get_option_data,
     long_call,
@@ -18,150 +36,204 @@ from options_viz import (
     plot_strategy
 )
 
-
 class TestOptionTradingStrategy(unittest.TestCase):
+    """
+    Unit test class to test various option trading strategy functions.
+
+    This class contains test cases for functions related to stock and option data retrieval,
+    as well as calculations of various option trading strategies' profit and loss (P/L). 
+    Each test case mocks relevant data sources and checks the correctness of the corresponding 
+    strategy's output by comparing it to expected results.
+
+    The following strategies are tested:
+    - Long Call
+    - Short Call
+    - Long Put
+    - Short Put
+    - Long Straddle
+    - Short Straddle
+    - Bull Call Spread
+    - Bear Call Spread
+    - Bull Put Spread
+    - Bear Put Spread
+
+    Additionally, the plot_strategy function is tested to ensure that 
+    the plotting and error handling work as expected when displaying
+    the trading strategies.
+    """
 
     @patch('yfinance.Ticker')
-    def test_get_stock_data(self, MockTicker):
-        # Mock the yfinance Ticker object and its history method
+    def test_get_stock_data(self, mock_ticker):
+        """
+        Test the get_stock_data function to ensure it returns the correct stock data.
+        """
         mock_stock_data = MagicMock()
         mock_stock_data.history.return_value = pd.DataFrame({
             'Close': [150, 155, 160, 165, 170],
             'Open': [149, 154, 159, 164, 169]
         })
-        MockTicker.return_value = mock_stock_data
-        
+        mock_ticker.return_value = mock_stock_data
         stock_data = get_stock_data("AAPL")
-        self.assertEqual(stock_data.shape, (5, 2))  # Checking if the returned DataFrame has 5 rows and 2 columns.
-        self.assertEqual(stock_data['Close'].iloc[-1], 170)  # Last close price should be 170.
+        self.assertEqual(stock_data.shape, (5, 2))
+        self.assertEqual(stock_data['Close'].iloc[-1], 170)
 
     @patch('yfinance.Ticker')
-    def test_get_option_data(self, MockTicker):
-        # Mock the yfinance Ticker object and its option chain method
+    def test_get_option_data(self, mock_ticker):
+        """
+        Test the get_option_data function to ensure it returns the correct option chain data.
+        """
         mock_stock_data = MagicMock()
         mock_option_chain = MagicMock()
         mock_option_chain.calls = pd.DataFrame({'strike': [150, 160, 170], 'lastPrice': [5, 7, 9]})
         mock_option_chain.puts = pd.DataFrame({'strike': [150, 160, 170], 'lastPrice': [4, 6, 8]})
         mock_stock_data.option_chain.return_value = mock_option_chain
         mock_stock_data.history.return_value = pd.DataFrame({'Close': [160]})
-        MockTicker.return_value = mock_stock_data
+        mock_ticker.return_value = mock_stock_data
 
         atm_call_strike, call_premium, atm_put_strike, put_premium = get_option_data("AAPL")
-        
         self.assertEqual(atm_call_strike, 160)
         self.assertEqual(call_premium, 7)
         self.assertEqual(atm_put_strike, 160)
         self.assertEqual(put_premium, 6)
 
     def test_long_call(self):
+        """
+        Test the long_call function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 160
         premium = 5
         result = long_call(stock_prices, strike, premium)
-        expected_result = [-5, -5, -5, 5, 15]  # For each stock price, calculate the P/L.
+        expected_result = [-5, -5, -5, 5, 15]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_short_call(self):
+        """
+        Test the short_call function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 160
         premium = 5
         result = short_call(stock_prices, strike, premium)
-        expected_result = [5, 5, 5, -5, -15]  # For each stock price, calculate the P/L.
+        expected_result = [5, 5, 5, -5, -15]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_long_put(self):
+        """
+        Test the long_put function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 160
         premium = 5
         result = long_put(stock_prices, strike, premium)
-        expected_result = [15, 5, -5, -5, -5]  # For each stock price, calculate the P/L.
+        expected_result = [15, 5, -5, -5, -5]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_short_put(self):
+        """
+        Test the short_put function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 160
         premium = 5
         result = short_put(stock_prices, strike, premium)
-        expected_result = [-15, -5, 5, 5, 5]  # For each stock price, calculate the P/L.
+        expected_result = [-15, -5, 5, 5, 5]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_long_straddle(self):
+        """
+        Test the long_straddle function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 160
         premium_call = 5
         premium_put = 5
         result = long_straddle(stock_prices, strike, premium_call, premium_put)
-        expected_result = [10, 0, -10, 0, 10]  # For each stock price, calculate the P/L.
+        expected_result = [10, 0, -10, 0, 10]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_short_straddle(self):
+        """
+        Test the short_straddle function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 160
         premium_call = 5
         premium_put = 5
         result = short_straddle(stock_prices, strike, premium_call, premium_put)
-        expected_result = [-10, 0, 10, 0, -10]  # For each stock price, calculate the P/L.
+        expected_result = [-10, 0, 10, 0, -10]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_bull_call_spread(self):
+        """
+        Test the bull_call_spread function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 150
         premium = 5
         strike_high = 170
         premium_high = 3
         result = bull_call_spread(stock_prices, strike, premium, strike_high, premium_high)
-        expected_result = [-2, -2, 8, 18, 18]  # For each stock price, calculate the P/L.
+        expected_result = [-2, -2, 8, 18, 18]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_bear_call_spread(self):
+        """
+        Test the bear_call_spread function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 150
         premium = 5
         strike_high = 170
         premium_high = 3
         result = bear_call_spread(stock_prices, strike, premium, strike_high, premium_high)
-        expected_result = [2, 2, -8, -18, -18]  # For each stock price, calculate the P/L.
+        expected_result = [2, 2, -8, -18, -18]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_bull_put_spread(self):
+        """
+        Test the bull_put_spread function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 170
         premium = 5
         strike_high = 150
         premium_high = 3
         result = bull_put_spread(stock_prices, strike, premium, strike_high, premium_high)
-        expected_result = [-18, -18, -8, 2, 2]  # For each stock price, calculate the P/L.
+        expected_result = [-18, -18, -8, 2, 2]
         np.testing.assert_array_equal(result, expected_result)
 
     def test_bear_put_spread(self):
+        """
+        Test the bear_put_spread function to ensure it calculates the profit/loss correctly.
+        """
         stock_prices = np.array([140, 150, 160, 170, 180])
         strike = 170
         premium = 5
         strike_high = 150
         premium_high = 3
         result = bear_put_spread(stock_prices, strike, premium, strike_high, premium_high)
-        expected_result = [18, 18, 8, -2, -2]  # For each stock price, calculate the P/L.
+        expected_result = [18, 18, 8, -2, -2]
         np.testing.assert_array_equal(result, expected_result)
 
     @patch('streamlit.error')
     @patch('streamlit.plotly_chart')
-    @patch('options_viz.get_stock_data')
-    @patch('options_viz.get_option_data')
-    def test_plot_strategy(self, mock_get_option_data, mock_get_stock_data, mock_plotly_chart, mock_error):
-        # Mock the functions that fetch data
+    @patch('strategy.get_stock_data')
+    @patch('strategy.get_option_data')
+    def test_plot_strategy(self, mock_get_option_data,
+        mock_get_stock_data, mock_plotly_chart, mock_error):
+        """
+        Test the plot_strategy function to ensure it properly plots the strategy and handles errors.
+        """
         mock_get_stock_data.return_value = pd.DataFrame({'Close': [160]})
-        mock_get_option_data.return_value = (160, 7, 160, 6)  # Mock ATM data
+        mock_get_option_data.return_value = (160, 7, 160, 6)
 
-        # Test plotting a strategy
         plot_strategy("AAPL", "Long Call", 160)
-        
-        # Check if plotly_chart was called
         mock_plotly_chart.assert_called_once()
 
-        # Test error handling
-        mock_get_stock_data.return_value = pd.DataFrame()  # Empty DataFrame for stock data
+        mock_get_stock_data.return_value = pd.DataFrame()
         plot_strategy("AAPL", "Long Call", 160)
-        mock_error.assert_called_once()  # Check if error was logged
+        mock_error.assert_called_once()
 
 if __name__ == '__main__':
     unittest.main()
