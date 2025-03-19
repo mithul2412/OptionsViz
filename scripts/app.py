@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Financial Analysis Dashboard
 
@@ -11,8 +9,14 @@ This application provides a comprehensive financial analysis dashboard with mult
 The app is built using Streamlit and integrates various financial data sources
 and visualization libraries for a complete trading research experience.
 
-Author: Financial Analysis Team
-Version: 2.0
+Author: 
+    Mithul Raaj
+
+Created:
+    March 2025
+
+License:
+    MIT
 """
 
 # Standard library imports
