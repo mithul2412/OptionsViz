@@ -32,6 +32,52 @@ Web-app (streamlit) or interface that allows users to upload a dataframe (e.g. c
 Think-or-Swim (TOS); and Interactive Brokers (IBKR) Trader Workstation (TWS) API
 
 
+## Installation and Setup
+
+### 1. Clone the repository:
+
+Clone the repo through HTTPS:
+```bash
+git clone https://github.com/rrichards7/OptionsViz.git
+```
+
+*[Optional] or clone via ssh:*
+```bash
+git clone git@github.com:rrichards7/OptionsViz.git
+```
+
+*[Optional] or clone via GitHub CLI:*
+```bash
+gh repo clone rrichards7/OptionsViz
+```
+
+cd into the repo after cloning:
+```
+cd OptionsViz
+```
+
+### 2. Create conda environment
+
+Create new conda environment (which will be called "optviz" by default) from the yaml file:
+
+```bash
+conda env create -f environment.yml
+```
+
+Activate the environment after creation:
+
+```bash
+conda activate optviz
+```
+
+### 3. Install
+
+Install OptionsViz from the main repo through the pyproject.toml file by running:
+
+```bash
+pip install .
+```
+
 ## Execution
 
 To run the streamlit page, run this cmd from the main repo level:
