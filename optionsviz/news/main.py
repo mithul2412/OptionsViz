@@ -20,15 +20,15 @@ import argparse
 from dotenv import load_dotenv
 
 # Import from refactored modules
-from news_core import fetch_news, process_news_articles_whole
-from embedding_utils import (
+from .news_core import fetch_news, process_news_articles_whole
+from .embedding_utils import (
     create_pinecone_index,
     clear_pinecone_index,
     upload_news_to_pinecone,
     preprocess_query,
     NewsRetriever
 )
-from llm_interface import LLMInterface
+from .llm_interface import LLMInterface
 
 # Load environment variables
 load_dotenv()

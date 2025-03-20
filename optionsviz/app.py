@@ -23,14 +23,14 @@ from typing import Union
 
 # Third-party imports
 from dotenv import load_dotenv
-from PIL import Image
 import streamlit as st
+# from PIL import Image
 
 # Import local modules after path setup and config initialization
-from news_module import (
+from st_modules.news_module import (
     render_news_app, render_news_sidebar,
 )
-from options_module import (
+from st_modules.options_module import (
     render_options_app, render_options_sidebar,
 )
 
@@ -56,7 +56,7 @@ load_dotenv()
 # Initialize placeholder image
 PLACEHOLDER_IMAGE = None
 # Try to load the image once at startup
-PLACEHOLDER_IMAGE = Image.open("img/news_icon.jpg")
+# PLACEHOLDER_IMAGE = Image.open("images/news_icon.jpg")
 PLACEHOLDER_LOADED = True
 
 # Constants and configuration

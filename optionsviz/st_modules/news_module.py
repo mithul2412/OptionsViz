@@ -19,26 +19,25 @@ from typing import Optional, Tuple
 import streamlit as st
 import pinecone
 
-# Initialize module availability flag
-NEWS_MODULES_AVAILABLE = False
-
 # Try to import news-specific modules
-try:
-    from news.news_core import fetch_news, process_news_articles_whole
-    from news.embedding_utils import (
-        create_pinecone_index,
-        clear_pinecone_index,
-        upload_news_to_pinecone,
-        preprocess_query,
-        NewsRetriever
-    )
-    from news.llm_interface import LLMInterface as NewsLLM
+# try:
+from news.news_core import fetch_news, process_news_articles_whole
+from news.embedding_utils import (
+    create_pinecone_index,
+    clear_pinecone_index,
+    upload_news_to_pinecone,
+    preprocess_query,
+    NewsRetriever
+)
+from news.llm_interface import LLMInterface as NewsLLM
 
-    # Set flag if all imports are successful
-    NEWS_MODULES_AVAILABLE = True
-except ImportError:
+# Initialize module availability flag
+# NEWS_MODULES_AVAILABLE = False
+# Set flag if all imports are successful
+NEWS_MODULES_AVAILABLE = True
+# except ImportError:
     # Keep flag as False if import fails
-    pass
+    # pass
 
 
 def change_page(direction: str) -> None:
@@ -262,7 +261,7 @@ def create_matching_index(api_key, index_name, dimension):
             )
             st.success(f"Created new index '{index_name}' with dimension {dimension}")
 
-    except pinecone.core.client.exceptions.NotFoundException as e:
+    except pinecone.exceptions.NotFoundException as e:
         # Index doesn't exist, create it
         if "not found" in str(e).lower():
             # pylint: disable=no-value-for-parameter
@@ -285,7 +284,7 @@ def render_news_app(retriever=None, llm=None) -> None:
         retriever: The initialized news retriever
         llm: The initialized LLM interface
     """
-    st.image("img/header_img.png", use_container_width=True)
+    # st.image("./images/header_img.png", use_container_width=True)
 
     # Set up the tabs
     tab1, tab2 = st.tabs(["NewsViz", "Ask Questions"])

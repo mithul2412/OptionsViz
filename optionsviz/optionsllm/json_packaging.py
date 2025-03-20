@@ -15,7 +15,7 @@ from typing import Dict, List, Any
 import pandas as pd
 
 # Import from other modules
-from options_data import (
+from .options_data import (
     get_fundamental_data,
     get_historical_data,
     compute_historical_volatility,
@@ -24,7 +24,7 @@ from options_data import (
     calculate_greeks,
     compute_put_call_ratio
 )
-from advanced_options import calculate_max_pain, compute_iv_skew
+from .advanced_options import calculate_max_pain, compute_iv_skew
 
 
 def build_compact_options_json(

@@ -14,38 +14,38 @@ import streamlit as st
 from openai import OpenAI
 
 # Initialize module availability flags
-EOD_CHAIN_AVAILABLE = False
-OPTIONS_MODULES_AVAILABLE = False
-OPTIONS_VIZ_AVAILABLE = False
+# EOD_CHAIN_AVAILABLE = False
+# OPTIONS_MODULES_AVAILABLE = False
+# OPTIONS_VIZ_AVAILABLE = False
 
 # Try to import options-specific modules
-try:
-    from eod_chain import (
-        plot_surface, calc_unusual_table, colorize_rows, get_options_data,
-        create_open_interest_chart, create_volume_chart, create_iv_chart,
-        get_tradingview_widgets
-    )
-    EOD_CHAIN_AVAILABLE = True
-except ImportError:
-    pass
+# try:
+from optionsllm.json_packaging import build_compact_options_json
+from optionsllm.main import summarize_options_data, get_prompt, get_message
 
-try:
-    from strategy import (
-        get_option_data, plot_strategy,
-        get_available_strategies, get_strategy_description
-    )
-    OPTIONS_VIZ_AVAILABLE = True
-except ImportError:
-    pass
+from .eod_chain import (
+    plot_surface, calc_unusual_table, colorize_rows, get_options_data,
+    create_open_interest_chart, create_volume_chart, create_iv_chart,
+    get_tradingview_widgets
+)
+
+# except ImportError:
+#     pass
+# try:
+from .strategy import (
+    get_option_data, plot_strategy,
+    get_available_strategies, get_strategy_description
+)
+# except ImportError:
+    # pass
 
 # Import Options Analysis modules
-try:
-    from optionsllm.json_packaging import build_compact_options_json
-    from optionsllm.main import summarize_options_data
-    OPTIONS_MODULES_AVAILABLE = True
-except ImportError:
-    pass
-
+# try:
+EOD_CHAIN_AVAILABLE = True
+OPTIONS_VIZ_AVAILABLE = True
+OPTIONS_MODULES_AVAILABLE = True
+# except ImportError:
+    # pass
 
 def render_options_sidebar() -> None:
     """
@@ -83,7 +83,7 @@ def render_options_app() -> None:
     Render the Options & Strategies application.
     This includes the main content area with tabs for different options analysis features.
     """
-    st.image("img/header_img.png", use_container_width=True)
+    # st.image("img/header_img.png", use_container_width=True)
 
     # Create tabs for EOD Chain, Strategy Viz, and Watchlist
     options_tabs = st.tabs(["EOD Chain Analysis", "Strategy Visualization",
@@ -553,46 +553,19 @@ def ask_llm_about_options_safe(summary_text: str, user_query: str, max_tokens: i
         model = "gpt-4"  # Default to GPT-4
 
     # System prompt for the LLM
-    system_prompt = (
-        "You are an expert options strategist. "
-        f"Answer the user's question based on the following options data, "
-        f"and keep your response under {max_tokens} tokens.\n\n"
-        "IMPORTANT: If your response suggests options trades, strategies, you MUST include"
-        " structured JSON block at the end of your message with the following format:\n\n"
-        "```json\n"
-        "{\n"
-        "  \"orders\": [\n"
-        "    {\n"
-        "      \"symbol\": \"TICKER\",\n"
-        "      \"option_type\": \"call\",\n"
-        "      \"direction\": \"buy\",\n"
-        "      \"strike\": 180.0,\n"
-        "      \"expiration\": \"2023-12-15\",\n"
-        "      \"quantity\": 1,\n"
-        "      \"reason\": \"Short explanation of this trade\"\n"
-        "    }\n"
-        "  ]\n"
-        "}\n"
-        "```\n\n"
-        "Make sure the JSON is valid and properly formatted with the exact fields shown above. "
-        "For option_type, use 'call' or 'put'. For direction, use 'buy' or 'sell'. "
-        "Use the YYYY-MM-DD format for expiration dates. "
-        "The options chain data will tell you the available strikes and expirations - "
-        "ONLY use strikes and expirations that are actually available in the data."
-    )
+    system_prompt = get_prompt(max_tokens)
 
     # Format user content with context and question
     user_content = f"OPTIONS DATA:\n\n{summary_text}\n\nQUESTION: {user_query}"
 
     try:
         # Configure API call based on which service we're using
+        message = get_message(system_prompt, user_content)
+
         if openrouter_api_key:
             completion = client.chat.completions.create(
                 model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_content}
-                ],
+                messages=message,
                 temperature=0.2,
                 max_tokens=max_tokens,
                 extra_headers=extra_headers
@@ -601,10 +574,7 @@ def ask_llm_about_options_safe(summary_text: str, user_query: str, max_tokens: i
             # For OpenAI, use standard parameters
             completion = client.chat.completions.create(
                 model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_content}
-                ],
+                messages=message,
                 temperature=0.2,
                 max_tokens=max_tokens
             )

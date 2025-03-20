@@ -18,7 +18,7 @@ from typing import Dict, Any
 from dotenv import load_dotenv
 
 # Import from other modules
-from json_packaging import build_compact_options_json
+from .json_packaging import build_compact_options_json
 
 # Conditional import for LLM support
 try:
@@ -26,7 +26,6 @@ try:
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
-
 
 def summarize_options_data(data: Dict[str, Any]) -> str:
     """
@@ -96,6 +95,68 @@ def summarize_options_data(data: Dict[str, Any]) -> str:
 
     return "\n".join(lines)
 
+def get_message(system_prompt: str, user_content: str) -> Dict[str, Any]:
+    """
+    Creates a message structure for the LLM API.
+
+    Args:
+        system_prompt: System prompt string for LLM
+        user_content: User's question or request for analysis
+
+    Returns:
+        message: Dictionary with system and user content
+
+    Example:
+        message = get_message(system_prompt, user_content)
+    """
+    message = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content}
+                ]
+    return message
+
+def get_prompt(max_tokens: int) -> str:
+    """
+    Creates a system prompt for the LLM.
+
+    Args:
+        max_tokens: Maximum tokens for the LLM response    
+
+    Returns:
+        system_prompt: Formatted system prompt string
+
+    Example:
+        prompt = get_prompt(1000)
+
+    """
+    system_prompt = (
+        "You are an expert options strategist. "
+        f"Answer the user's question based on the following options data, "
+        f"and keep your response under {max_tokens} tokens.\n\n"
+        "IMPORTANT: If your response suggests options trades, strategies, you MUST include "
+        "a structured JSON block at the end of your message with the following format:\n\n"
+        "```json\n"
+        "{\n"
+        "  \"orders\": [\n"
+        "    {\n"
+        "      \"symbol\": \"TICKER\",\n"
+        "      \"option_type\": \"call\",\n"
+        "      \"direction\": \"buy\",\n"
+        "      \"strike\": 180.0,\n"
+        "      \"expiration\": \"2023-12-15\",\n"
+        "      \"quantity\": 1,\n"
+        "      \"reason\": \"Short explanation of this trade\"\n"
+        "    }\n"
+        "  ]\n"
+        "}\n"
+        "```\n\n"
+        "Make sure the JSON is valid and formatted with the exact fields shown above. "
+        "For option_type, use 'call' or 'put'. For direction, use 'buy' or 'sell'. "
+        "Use the YYYY-MM-DD format for expiration dates. "
+        "The options chain data will tell you the available strikes and expirations - "
+        "ONLY use strikes and expirations that are actually available in the data."
+    )
+    return system_prompt
 
 def ask_llm_about_options(
     summary_text: str,
@@ -131,33 +192,7 @@ def ask_llm_about_options(
         return "Error: OpenAI library not installed. "
 
     # Create system prompt with instructions
-    system_prompt = (
-        "You are an expert options strategist. "
-        f"Answer the user's question based on the following options data, "
-        f"and keep your response under {max_tokens} tokens.\n\n"
-        "IMPORTANT: If your response suggests options trades, strategies, you MUST include "
-        "a structured JSON block at the end of your message with the following format:\n\n"
-        "```json\n"
-        "{\n"
-        "  \"orders\": [\n"
-        "    {\n"
-        "      \"symbol\": \"TICKER\",\n"
-        "      \"option_type\": \"call\",\n"
-        "      \"direction\": \"buy\",\n"
-        "      \"strike\": 180.0,\n"
-        "      \"expiration\": \"2023-12-15\",\n"
-        "      \"quantity\": 1,\n"
-        "      \"reason\": \"Short explanation of this trade\"\n"
-        "    }\n"
-        "  ]\n"
-        "}\n"
-        "```\n\n"
-        "Make sure the JSON is valid and formatted with the exact fields shown above. "
-        "For option_type, use 'call' or 'put'. For direction, use 'buy' or 'sell'. "
-        "Use the YYYY-MM-DD format for expiration dates. "
-        "The options chain data will tell you the available strikes and expirations - "
-        "ONLY use strikes and expirations that are actually available in the data."
-    )
+    system_prompt = get_prompt(max_tokens)
 
     # Format user content with context and question
     user_content = f"OPTIONS DATA:\n\n{summary_text}\n\nQUESTION: {user_query}"
@@ -188,13 +223,11 @@ def ask_llm_about_options(
         model = "gpt-4" if "gpt-4" in client.models.list() else "gpt-3.5-turbo"
 
     # Make the API call
+    message = get_message(system_prompt, user_content)
     completion = client.chat.completions.create(
         extra_headers=extra_headers,
         model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content}
-        ],
+        messages=message,
         temperature=0.2,  # Lower temperature for more deterministic responses
         max_tokens=max_tokens
     )

@@ -209,7 +209,7 @@ def create_pinecone_index(
 
         return f"Using existing Pinecone index: {index_name} (dimension: {index_dimension})"
 
-    except pinecone.core.client.exceptions.NotFoundException as e:
+    except pinecone.exceptions.NotFoundException as e:
         # Index doesn't exist, create it
         if "not found" in str(e).lower() or "does not exist" in str(e).lower():
             print(f"Creating new Pinecone index: {index_name} with dimension {dimension}")
