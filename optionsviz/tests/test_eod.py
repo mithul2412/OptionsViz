@@ -400,7 +400,7 @@ class TestEODMethods(unittest.TestCase):
         puts = pd.DataFrame({'strike': [145, 150], 'openInterest': [800, 1200]})
         atm = 150.0
 
-        with patch('eod_chain.create_oi_hists') as mock_create_oi_hists:
+        with patch('st_modules.eod_chain.create_oi_hists') as mock_create_oi_hists:
             mock_create_oi_hists.return_value = go.Figure()
             fig = create_open_interest_chart(calls, puts, atm)
 
@@ -420,7 +420,7 @@ class TestEODMethods(unittest.TestCase):
         calls = pd.DataFrame({'strike': [150, 155], 'volume': [1000, 1500]})
         puts = pd.DataFrame({'strike': [145, 150], 'volume': [800, 1200]})
 
-        with patch('eod_chain.create_vol_hists') as mock_create_vol_hists:
+        with patch('st_modules.eod_chain.create_vol_hists') as mock_create_vol_hists:
             mock_create_vol_hists.return_value = go.Figure()
             fig = create_volume_chart(calls, puts, atm)
 
@@ -449,7 +449,7 @@ class TestEODMethods(unittest.TestCase):
         })
 
         # Test with columns needed for ATM calculation
-        with patch('eod_chain.create_iv_smile') as mock_create_iv_smile:
+        with patch('st_modules.eod_chain.create_iv_smile') as mock_create_iv_smile:
             mock_create_iv_smile.return_value = go.Figure()
             fig = create_iv_chart(calls, puts)
             self.assertEqual(mock_create_iv_smile.call_count, 1)
@@ -461,7 +461,7 @@ class TestEODMethods(unittest.TestCase):
             'impliedVolatility': [0.3, 0.35],
         })
 
-        with patch('eod_chain.create_iv_smile') as mock_create_iv_smile:
+        with patch('st_modules.eod_chain.create_iv_smile') as mock_create_iv_smile:
             mock_create_iv_smile.return_value = go.Figure()
             fig = create_iv_chart(calls_no_in_money, puts)
             self.assertEqual(mock_create_iv_smile.call_count, 1)
@@ -469,7 +469,7 @@ class TestEODMethods(unittest.TestCase):
 
         # Test fallback with empty calls
         empty_df = pd.DataFrame()
-        with patch('eod_chain.create_iv_smile') as mock_create_iv_smile:
+        with patch('st_modules.eod_chain.create_iv_smile') as mock_create_iv_smile:
             mock_create_iv_smile.return_value = go.Figure()
             fig = create_iv_chart(empty_df, puts)
             self.assertEqual(mock_create_iv_smile.call_count, 1)
@@ -487,7 +487,7 @@ class TestEODMethods(unittest.TestCase):
 
         # Test get_tradingview_widgets (wrapper for generate_widgets)
         ticker = 'AAPL'
-        with patch('eod_chain.generate_widgets') as mock_generate_widgets:
+        with patch('st_modules.eod_chain.generate_widgets') as mock_generate_widgets:
             expected_result = ('widget1', 'widget2', 'widget3')
             mock_generate_widgets.return_value = expected_result
             result = get_tradingview_widgets(ticker)
