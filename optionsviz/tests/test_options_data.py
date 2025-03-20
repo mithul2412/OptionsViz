@@ -27,7 +27,6 @@ from optionsllm.options_data import (
     compute_put_call_ratio
 )
 
-
 class TestFundamentalData(unittest.TestCase):
     """Tests retrieval of fundamental stock data from Yahoo Finance.
     

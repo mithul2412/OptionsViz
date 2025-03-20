@@ -105,7 +105,7 @@ class TestMain(unittest.TestCase):
         self.assertIn("Strike=145.0 (ITM) IV=30.0%", result)
         self.assertIn("Strike=145.0 (OTM) IV=28.0%", result)
 
-    def test_summarize_options_data_error(self):
+    def test_summarize_options_data_error(self): # pylint: disable=duplicate-code
         """Test summarization when data contains an error."""
         # Sample data with error
         data = {
@@ -118,7 +118,7 @@ class TestMain(unittest.TestCase):
         # Assertions
         self.assertEqual(result, "No options data available for BADTICKER")
 
-    def test_summarize_options_data_no_historicalvol(self):
+    def test_summarize_options_data_no_historicalvol(self): # pylint: disable=duplicate-code
         """Test summarization without historical volatility."""
         # Sample data without historical volatility
         data = {
@@ -164,7 +164,7 @@ class TestMain(unittest.TestCase):
         self.assertIn("Ticker: AAPL", result)
         self.assertNotIn("Historical Volatility", result)
 
-    def test_summarize_options_data_without_iv_skew(self):
+    def test_summarize_options_data_without_iv_skew(self): # pylint: disable=duplicate-code
         """Test summarization without IV skew data."""
         data = {
             "ticker": "AAPL",

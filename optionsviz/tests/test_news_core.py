@@ -16,8 +16,6 @@ from news.news_core import fetch_news, process_news_articles
 
 # Add the project directory to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-
 class TestFetchNews(unittest.TestCase):
     """Test suite for the fetch_news function."""
 
