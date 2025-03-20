@@ -8,12 +8,12 @@ This package provides tools for retrieving, analyzing, and querying news article
 - Querying news with natural language using AI
 """
 
-from news.news_core import (
+from news_core import (
     fetch_news,
     process_news_articles_whole
 )
 
-from news.embedding_utils import (
+from embedding_utils import (
     SentenceTransformerEmbeddings,
     preprocess_query,
     create_pinecone_index,
@@ -22,7 +22,7 @@ from news.embedding_utils import (
     NewsRetriever
 )
 
-from news.llm_interface import (
+from llm_interface import (
     LLMInterface
 )
 
