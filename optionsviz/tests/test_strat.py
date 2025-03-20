@@ -17,16 +17,10 @@ License:
     MIT
 """
 import unittest
-import os
-import sys
 from unittest.mock import patch, MagicMock
 import numpy as np
 import pandas as pd
-# Add parent directory to path to import app_split
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import strategy # pylint: disable=wrong-import-position
-from strategy import ( # pylint: disable=wrong-import-position
+from st_modules.strategy import (
     get_stock_data,
     long_call,
     short_call,
@@ -40,7 +34,8 @@ from strategy import ( # pylint: disable=wrong-import-position
     bear_put_spread,
     plot_strategy,
     get_available_strategies,
-    get_strategy_description
+    get_strategy_description,
+    get_option_data
 )
 
 class TestOptionTradingStrategy(unittest.TestCase):
@@ -89,19 +84,19 @@ class TestOptionTradingStrategy(unittest.TestCase):
         mock_stock_data.options = ['2025-04-18']
 
         mock_ticker.return_value = mock_stock_data
-        atm_call_strike, call_premium, atm_put_strike, put_premium =strategy.get_option_data("AAPL")
+        atm_call_strike, call_premium, atm_put_strike, put_premium = get_option_data("AAPL")
         self.assertEqual((atm_call_strike, call_premium, atm_put_strike, put_premium),
                         (160, 7, 160, 6))
 
         # Clear the function's cached result to test again
-        strategy.get_option_data.clear()
+        get_option_data.clear()
 
         # 2) scenario: "no options"
         mock_stock_data_empty = MagicMock()
         mock_stock_data_empty.options = []
         mock_ticker.return_value = mock_stock_data_empty
 
-        result = strategy.get_option_data("AAPL")
+        result = get_option_data("AAPL")
         self.assertEqual(result, (None, None, None, None))
 
 
@@ -357,8 +352,8 @@ class TestOptionTradingStrategy(unittest.TestCase):
 
     @patch('streamlit.error')
     @patch('streamlit.plotly_chart')
-    @patch('strategy.get_stock_data')
-    @patch('strategy.get_option_data')
+    @patch('st_modules.strategy.get_stock_data')
+    @patch('st_modules.strategy.get_option_data')
     def test_plot_strategy(self, mock_get_option_data, mock_get_stock_data,
                            mock_plotly_chart, mock_error):# pylint: disable=unused-argument
         #mock_error is unused, but we need it to avoid a crash
