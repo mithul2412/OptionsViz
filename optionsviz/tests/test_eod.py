@@ -22,7 +22,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from st_modules import strategy
-from eod_chain import (
+from st_modules.eod_chain import (
     create_iv_smile,
     create_oi_hists,
     plot_surface,
