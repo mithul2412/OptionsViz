@@ -38,7 +38,7 @@ dependencies:
       - cloudpathlib==0.21.0
       - colorama==0.4.6
       - confection==0.1.5
-      - contourpy==1.3.1
+      - contourpy
       - coverage==7.7.0
       - cycler==0.12.1
       - cymem==2.0.11
