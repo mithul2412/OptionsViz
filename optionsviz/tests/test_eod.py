@@ -15,20 +15,14 @@ Created:
 License:
     MIT
 """
-
-import os
-import sys
 import unittest
 from unittest.mock import patch, MagicMock
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-# Add parent directory to path to import app_split
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import strategy # pylint: disable=wrong-import-position
-
-from eod_chain import (# pylint: disable=wrong-import-position
+from st_modules import strategy
+from eod_chain import (
     create_iv_smile,
     create_oi_hists,
     plot_surface,
