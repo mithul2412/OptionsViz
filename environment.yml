@@ -8,7 +8,7 @@ dependencies:
   - bzip2
   - ca-certificates
   - expat
-  - libffi=3.4.4=hd77b12b_1
+  - libffi
   - openssl=3.0.15=h827c3e9_0
   - python=3.12.7=h14ffc60_0
   - setuptools=75.8.0=py312haa95532_0
