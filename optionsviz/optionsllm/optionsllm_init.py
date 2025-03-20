@@ -8,7 +8,7 @@ This package provides tools for analyzing stock options, including:
 - LLM-powered options strategy recommendations
 """
 
-from optionsllm.options_data import (
+from options_data import (
     get_fundamental_data,
     get_historical_data,
     compute_historical_volatility,
@@ -18,16 +18,16 @@ from optionsllm.options_data import (
     compute_put_call_ratio
 )
 
-from optionsllm.advanced_options import (
+from advanced_options import (
     calculate_max_pain,
     compute_iv_skew
 )
 
-from optionsllm.json_packaging import (
+from json_packaging import (
     build_compact_options_json
 )
 
-from optionsllm.main import (
+from main import (
     summarize_options_data,
     ask_llm_about_options
 )
