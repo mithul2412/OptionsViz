@@ -48,7 +48,7 @@ class TestEODMethods(unittest.TestCase):
     def test_get_data_invalid(self):
         '''Tests the get_data function with an invalid ticker.'''
         ticker = 'dwakdjawdnawo'
-        with patch('eod_chain.get_options_data') as mock_get_options_data:
+        with patch('st_modules.eod_chain.get_options_data') as mock_get_options_data:
             # In the actual implementation, get_data returns empty dicts/lists for invalid ticker
             # instead of None, so we need to match this behavior
             mock_get_options_data.return_value = ([], None, None, {}, {}, None)
@@ -65,7 +65,7 @@ class TestEODMethods(unittest.TestCase):
             self.assertEqual(expiration_dates, [])  # Changed from assertTrue(not expiration_dates)
             self.assertIsNone(atm)
 
-    @patch('eod_chain.get_options_data')
+    @patch('st_modules.eod_chain.get_options_data')
     def test_get_data_valid(self, mock_get_options_data):
         '''Tests the get_data function with a valid ticker.'''
         # Mock the get_options_data function
@@ -93,7 +93,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_iv_smile(self):
         '''Tests the create_iv_smile function with valid data.'''
-        with patch('eod_chain.get_data') as mock_get_data:
+        with patch('st_modules.eod_chain.get_data') as mock_get_data:
             mock_get_data.return_value = (
                 {'2025-04-18': pd.DataFrame({'strike':[150, 155],'impliedVolatility':[0.3, 0.35]})},
                 {'2025-04-18': pd.DataFrame({'strike':[145, 150],'impliedVolatility':[0.25, 0.3]})},
@@ -113,7 +113,7 @@ class TestEODMethods(unittest.TestCase):
     def test_iv_smile_invalid(self):
         '''Tests the create_iv_smile function with invalid data.'''
         # Mock the functions to ensure they raise the expected errors
-        with patch('eod_chain.create_iv_smile') as mock_create_iv_smile:
+        with patch('st_modules.eod_chain.create_iv_smile') as mock_create_iv_smile:
             mock_create_iv_smile.side_effect = TypeError("Expected TypeError")
 
             # Now this will properly catch the TypeError
@@ -127,7 +127,7 @@ class TestEODMethods(unittest.TestCase):
     def test_vol_hist_invalid(self):
         '''Tests the create_vol_hists function with invalid data.'''
         # Instead of testing the real function, we'll use a mock
-        with patch('eod_chain.create_vol_hists', autospec=True) as mock_create_vol_hists:
+        with patch('st_modules.eod_chain.create_vol_hists', autospec=True) as mock_create_vol_hists:
             # Configure the mock to raise TypeError when called with specific arguments
             mock_create_vol_hists.side_effect = TypeError("Test TypeError")
 
@@ -137,7 +137,7 @@ class TestEODMethods(unittest.TestCase):
 
     def test_oi_hist(self):
         '''Tests the create_oi_hists function with valid data.'''
-        with patch('eod_chain.get_data') as mock_get_data:
+        with patch('st_modules.eod_chain.get_data') as mock_get_data:
             mock_get_data.return_value = (
                 {'2025-04-18': pd.DataFrame({'strike': [150, 155], 'openInterest': [1000, 1500]})},
                 {'2025-04-18': pd.DataFrame({'strike': [145, 150], 'openInterest': [800, 1200]})},
@@ -157,7 +157,7 @@ class TestEODMethods(unittest.TestCase):
     def test_oi_hist_invalid(self):
         '''Tests the create_oi_hists function with invalid data.'''
         # Mock the function to ensure it raises the expected errors
-        with patch('eod_chain.create_oi_hists') as mock_create_oi_hists:
+        with patch('st_modules.eod_chain.create_oi_hists') as mock_create_oi_hists:
             mock_create_oi_hists.side_effect = TypeError("Expected TypeError")
 
             # Now this will properly catch the TypeError
@@ -198,7 +198,7 @@ class TestEODMethods(unittest.TestCase):
     def test_plot_surface_invalid(self):
         '''Tests the plot_surface function with invalid data.'''
         # Mock the function to ensure it raises the expected errors
-        with patch('eod_chain.plot_surface') as mock_plot_surface:
+        with patch('st_modules.eod_chain.plot_surface') as mock_plot_surface:
             mock_plot_surface.side_effect = ValueError("Expected ValueError")
 
             # Properly structured chains and expiration_dates
@@ -233,7 +233,7 @@ class TestEODMethods(unittest.TestCase):
         })
 
         # Mock DataFrame operations directly instead of patching pandas methods
-        with patch('eod_chain.calc_unusual_table', return_value=df_chain):
+        with patch('st_modules.eod_chain.calc_unusual_table', return_value=df_chain):
             # Call the function directly with a return value set by the mock
             oi_min = 1000
             df_proc = calc_unusual_table(df_chain, True, oi_min)
@@ -244,7 +244,7 @@ class TestEODMethods(unittest.TestCase):
     def test_calc_unusual_table_invalid(self):
         '''Tests the calc_unusual_table function with invalid data.'''
         # Mock the function to ensure it raises the expected errors
-        with patch('eod_chain.calc_unusual_table') as mock_calc_unusual:
+        with patch('st_modules.eod_chain.calc_unusual_table') as mock_calc_unusual:
             # Set different side effects for different test cases
             mock_calc_unusual.side_effect = [
                 TypeError("dict object has no attribute 'volume'"),
