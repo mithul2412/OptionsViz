@@ -216,7 +216,7 @@ def main():
     parser.add_argument("--expirations", type=int, default=3,
                         help="Number of expiration dates to include")
     parser.add_argument("--hv", action="store_true",
-                        elp="Include historical volatility in the data")
+                        help="Include historical volatility in the data")
     parser.add_argument("--tokens", type=int, default=1000,
                         help="Max tokens for LLM responses")
     parser.add_argument("--interactive", action="store_true",
