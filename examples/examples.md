@@ -107,7 +107,8 @@ http://localhost:8501/
 
 **Outcome**: Get updated financial news relevant to trading decisions.
 
-![](diagrams/News-Analyzer-AI.png)
+![](diagrams/News-Retriever.png)
+
 
 ### Use Case 3: AI-Powered Market Insights
 
@@ -122,7 +123,7 @@ http://localhost:8501/
 
 **Outcome**: Quickly gain insights on financial trends without manually reading multiple articles.
 
-![](diagrams/News-Retriever.png)
+![](diagrams/News-Analyzer-AI.png)
 
 ### Use Case 4: Strategy Builder
 
