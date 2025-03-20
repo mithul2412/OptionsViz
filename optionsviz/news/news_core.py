@@ -11,16 +11,19 @@ The module focuses on whole-article processing, treating each article
 as a single document rather than chunking it into smaller pieces.
 """
 
-from newsapi import NewsApiClient
 import os
 from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional
+
 from dotenv import load_dotenv
-from typing import List, Dict, Any, Optional, Union
+from newsapi import NewsApiClient
 from langchain.schema import Document
 
 load_dotenv()
 
-
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-positional-arguments
+# This function calls an API and fetches news articles based on the search criteria
 def fetch_news(
     query: Optional[str] = None,
     sources: Optional[str] = None,
@@ -33,10 +36,10 @@ def fetch_news(
 ) -> List[Dict[str, Any]]:
     """
     Fetch news articles from NewsAPI based on search criteria.
-    
+
     This function provides access to both the 'everything' and 'top-headlines'
     endpoints of NewsAPI, depending on whether a category is specified.
-    
+
     Args:
         query: Keywords or phrases to search for (e.g., "climate change")
         sources: Comma-separated string of news sources or blogs (e.g., "bbc-news,cnn")
@@ -46,13 +49,13 @@ def fetch_news(
         language: The 2-letter ISO-639-1 code of the language (default: 'en')
         sort_by: The order to sort articles ("relevancy", "popularity", "publishedAt")
         category: Category for top headlines (business, entertainment, health, etc.)
-        
+
     Returns:
         List of news articles with their metadata
-        
+
     Raises:
         ValueError: If NEWS_API_KEY environment variable is not set
-        
+
     Example:
         >>> articles = fetch_news(
         ...     query="climate change",
@@ -67,17 +70,17 @@ def fetch_news(
     api_key = os.getenv('NEWS_API_KEY')
     if not api_key:
         raise ValueError("NEWS_API_KEY environment variable not set")
-    
+
     newsapi = NewsApiClient(api_key=api_key)
-    
+
     # Set default dates if not provided
     if from_date is None:
         # Default to 7 days ago
         from_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-    
+
     if to_date is None:
         to_date = datetime.now().strftime('%Y-%m-%d')
-    
+
     # Fetch articles
     if category:
         # Use top headlines for category-based queries
@@ -102,12 +105,12 @@ def fetch_news(
             page_size=100  # Fetch more articles at once
         )
         articles = response.get('articles', [])
-    
+
     # Add unique IDs and improve metadata
     for i, article in enumerate(articles):
         # Add a unique ID for each article
         article['id'] = f"news_{i}"
-        
+
         # Convert publishedAt to proper datetime if needed
         if 'publishedAt' in article:
             try:
@@ -116,26 +119,26 @@ def fetch_news(
             except (ValueError, TypeError):
                 # Handle parsing errors gracefully
                 article['published_date'] = article['publishedAt']
-    
+
     print(f"Fetched {len(articles)} news articles")
     return articles
 
 
-def process_news_articles(articles: List[Dict[str, Any]]) -> List[Document]:
+def process_news_articles(news_articles: List[Dict[str, Any]]) -> List[Document]:
     """
     Process news articles into Document objects for vector storage.
-    
-    This function treats each article as a whole document (rather than 
+
+    This function treats each article as a whole document (rather than
     chunking it), which is typically more appropriate for news articles
     that aren't excessively long. The resulting Document objects include
     both the article text and comprehensive metadata.
-    
+
     Args:
-        articles: List of news articles from the fetch_news function
-        
+        news_articles: List of news articles from the fetch_news function
+
     Returns:
         List of Document objects, one per article
-        
+
     Example:
         >>> articles = fetch_news(query="technology")
         >>> documents = process_news_articles(articles)
@@ -143,8 +146,8 @@ def process_news_articles(articles: List[Dict[str, Any]]) -> List[Document]:
         'Latest Technology Breakthrough Announced'
     """
     documents = []
-    
-    for article in articles:
+
+    for article in news_articles:
         # Extract the content from the article
         title = article.get('title', '')
         description = article.get('description', '')
@@ -152,9 +155,8 @@ def process_news_articles(articles: List[Dict[str, Any]]) -> List[Document]:
         source_name = article.get('source', {}).get('name', 'Unknown')
         author = article.get('author', '')
         published_at = article.get('publishedAt', '')
-        
+
         # Combine the text fields into a structured document
-        # Format helps the embedding model understand the document structure
         full_content = f"""
 TITLE: {title}
 
@@ -168,7 +170,7 @@ DESCRIPTION: {description}
 
 CONTENT: {content}
 """
-        
+
         # Comprehensive metadata to help with filtering and display
         metadata = {
             'source': source_name,
@@ -180,12 +182,11 @@ CONTENT: {content}
             'document_type': 'news_article',
             'article_id': article.get('id', f"news_{len(documents)}")
         }
-        
-        documents.append(Document(page_content=full_content, metadata=metadata))
-    
-    print(f"Created {len(documents)} documents from {len(articles)} news articles")
-    return documents
 
+        documents.append(Document(page_content=full_content, metadata=metadata))
+
+    print(f"Created {len(documents)} documents from {len(news_articles)} news articles")
+    return documents
 
 # Alias for backward compatibility
 process_news_articles_whole = process_news_articles
@@ -194,7 +195,7 @@ process_news_articles_whole = process_news_articles
 # Example usage if running as script
 if __name__ == "__main__":
     # Example usage
-    articles = fetch_news(
+    newsarticles = fetch_news(
         query="artificial intelligence",
         sources="techcrunch,wired,the-verge",
         from_date="2025-02-20",
@@ -202,10 +203,10 @@ if __name__ == "__main__":
         language="en",
         sort_by="publishedAt"
     )
-    
+
     # Process articles as whole documents
-    docs = process_news_articles(articles)
-    
+    docs = process_news_articles(newsarticles)
+
     # Print sample article
     if docs:
         print("\nSample article:")
