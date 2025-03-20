@@ -1,7 +1,7 @@
 name: optviz
 channels:
-  - conda-forge
-  - defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
 dependencies:
   - altair=5.0.1
   - astroid=3.3.8
@@ -46,8 +46,8 @@ dependencies:
   - pygments=2.15.1
   - pylint=3.3.3
   - pyparsing=3.2.0
-  - python=3.9.20
   - python-dateutil=2.9.0post0
+  - python==3.9.19
   - pytz=2024.1
   - requests=2.32.3
   - rich=13.9.4
@@ -67,15 +67,13 @@ dependencies:
   - xz=5.6.4
   - zlib=1.2.13
   - zstd=1.5.6
+  - conda-forge::spacy
   - pip:
-      - beautifulsoup4==4.13.3
-      - dash==3.0.0
-      - flask==3.0.3
-      - joblib==1.4.2
-      - jupyter-core==5.7.2
-      - nbformat==5.10.4
-      - scikit-learn==1.6.1
-      - scipy==1.13.1
-      - statsmodels==0.14.4
-      - tqdm==4.67.1
-      - yfinance==0.2.54
+        - dotenv
+        - openai
+        - pinecone
+        - langchain
+        - newsapi-python
+        - py_vollib
+        - sentence_transformers
+        - yfinance
