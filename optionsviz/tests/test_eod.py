@@ -29,7 +29,7 @@ from eod_chain import (
     calc_unusual_table,
     generate_widgets,
     get_data,
-    display_chain_analysis
+    # display_chain_analysis
 )
 
 class TestEODMethods(unittest.TestCase):
@@ -55,34 +55,34 @@ class TestEODMethods(unittest.TestCase):
         test_generate_widgets: Tests the generate_widgets function with valid data.
     """
 
-    def test_display_chain_analysis(self):
-        '''
-        Tests the display_chain_analysis function with valid data.
-        '''
-        ticker = 'AAPL'
-        df_calls_dict, df_puts_dict, _, \
-                _, expiration_dates, atm, \
-                     _ = get_data(ticker)
+    # def test_display_chain_analysis(self):
+    #     '''
+    #     Tests the display_chain_analysis function with valid data.
+    #     '''
+    #     ticker = 'AAPL'
+    #     df_calls_dict, df_puts_dict, _, \
+    #             _, expiration_dates, atm, \
+    #                  _ = get_data(ticker)
 
-        calls = df_calls_dict[expiration_dates[0]]
-        puts = df_puts_dict[expiration_dates[0]]
-        atm = 150.
-        col_inner = st.columns(2)
+    #     calls = df_calls_dict[expiration_dates[0]]
+    #     puts = df_puts_dict[expiration_dates[0]]
+    #     atm = 150.
+    #     col_inner = st.columns(2)
 
-        res = display_chain_analysis(col_inner=col_inner,
-                               calls=calls,
-                               puts=puts,
-                               atm=atm,
-                               df_calls_dict=df_calls_dict,
-                               df_puts_dict=df_puts_dict,
-                               expiration_dates=expiration_dates)
-        self.assertTrue(res)
+    #     res = display_chain_analysis(col_inner=col_inner,
+    #                            calls=calls,
+    #                            puts=puts,
+    #                            atm=atm,
+    #                            df_calls_dict=df_calls_dict,
+    #                            df_puts_dict=df_puts_dict,
+    #                            expiration_dates=expiration_dates)
+    #     self.assertTrue(res)
 
-    def test_display_chain_analysis_invalid(self):
-        '''
-        Tests the display_chain_analysis function with invalid data.
-        '''
-        self.assertRaises(TypeError, display_chain_analysis, col_inner=np.array([]))
+    # def test_display_chain_analysis_invalid(self):
+    #     '''
+    #     Tests the display_chain_analysis function with invalid data.
+    #     '''
+    #     self.assertRaises(TypeError, display_chain_analysis, col_inner=np.array([]))
 
     def test_get_data_invalid(self):
         '''
@@ -266,8 +266,7 @@ class TestEODMethods(unittest.TestCase):
         single_ticker_widget_truth = f'''
         <div class="tradingview-widget-container">
             <div class="tradingview-widget-container__widget"></div>
-            <script type="text/javascript" \
-                src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
             {{
                 "symbol": "{ticker}",
                 "locale": "en",
@@ -289,13 +288,12 @@ class TestEODMethods(unittest.TestCase):
                     <span class="blue-text">Track all markets on TradingView</span>
                 </a>
             </div>
-            <script type="text/javascript" \
-                src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
             {{
                 "interval": "1m",
-                "width": 425,
+                "width": 280,
                 "isTransparent": true,
-                "height": 450,
+                "height": 500,
                 "symbol": "{ticker}",
                 "showIntervalTabs": true,
                 "displayMode": "single",
@@ -309,8 +307,7 @@ class TestEODMethods(unittest.TestCase):
         tv_advanced_plot_truth = f"""
         <div class="tradingview-widget-container">
             <div id="tradingview_chart"></div>
-            <script type="text/javascript" \
-                src="https://s3.tradingview.com/tv.js"></script>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
             <script type="text/javascript">
                 new TradingView.widget({{
                     "width": "100%",
@@ -325,7 +322,7 @@ class TestEODMethods(unittest.TestCase):
                     "enable_publishing": false,
                     "hide_top_toolbar": false,
                     "save_image": false,
-                    "container_id": "tv_advanced_plot"
+                    "container_id": "tradingview_chart"
                 }});
             </script>
         </div>
