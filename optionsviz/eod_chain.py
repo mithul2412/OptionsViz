@@ -1,25 +1,24 @@
 """
-Module Name: eod_chain.py
+EOD Chain Analysis Wrapper Module
 
-Description:
-    This module serves as the streamlit end-of-day (EOD) options chain visualization page. 
-    It provides functionality to visualize options data, including implied volatility,
-    volume, open interest, and unusual activity.
+This module wraps the functionality from eod_chain.py to be used in other Streamlit applications
+without causing conflicts with Streamlit's page configuration.
 
 Author:
-    Ryan J Richards
+    Ryan J Richards 
 
 Created:
-    Feb 2025
+    March 2025
 
 License:
     MIT
 """
+
 import numpy as np
 import pandas as pd
-import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
+import streamlit as st
 
 @st.cache_data()
 def create_iv_smile(calls: pd.DataFrame,
@@ -44,10 +43,6 @@ def create_iv_smile(calls: pd.DataFrame,
     Raises:
         TypeError: type is incorrect for any inputs
         ValueError: invalid value for atm (less than 0)
-    
-    Example:
-        fig = create_iv_smile(calls, puts, atm)
-        fig.show()
     """
     if not isinstance(calls, pd.DataFrame):
         raise TypeError('calls must be a dataframe')
@@ -115,10 +110,6 @@ def create_vol_hists(calls: pd.DataFrame,
     Raises:
         TypeError: type is incorrect for any inputs
         ValueError: invalid value for atm (less than 0)
-    
-    Example:
-        fig = create_vol_hists(calls, puts, atm)
-        fig.show()
     """
     if not isinstance(calls, pd.DataFrame):
         raise TypeError('calls must be a dataframe')
@@ -202,10 +193,6 @@ def create_oi_hists(calls: pd.DataFrame,
     Raises:
         TypeError: type is incorrect for any inputs
         ValueError: invalid value for atm (less than 0)
-    
-    Example:
-        fig = create_oi_hists(calls, puts, atm)
-        fig.show()
     """
     if not isinstance(calls, pd.DataFrame):
         raise TypeError('calls must be a dataframe')
@@ -225,13 +212,6 @@ def create_oi_hists(calls: pd.DataFrame,
     fig.add_trace(go.Bar(
         x=puts['strike'],
         y=puts['openInterest'].values,
-        name='Puts',
-        orientation='v',
-        marker_color='#D9534F'
-    ))
-    fig.add_trace(go.Bar(
-        x=puts['strike'],
-        y=puts['openInterest'],
         name='Puts',
         orientation='v',
         marker_color='#D9534F'
@@ -290,10 +270,6 @@ def plot_surface(chains: dict,
         TypeError: type is incorrect for any inputs
         ValueError: invalid value for expiration_dates (empty) or 
             chains (empty)
-    
-    Example:
-        fig = plot_surface(chains, expiration_dates)
-        fig.show()
     """
     if len(expiration_dates) == 0:
         raise ValueError('Expiration dates is empty.')
@@ -327,15 +303,61 @@ def plot_surface(chains: dict,
 
     uniq_strikes = np.array(list(uniq_strikes.keys()))\
                         [np.array(list(uniq_strikes.values()))==len(expiration_dates)]
+    
+    # Handle case where there are no shared strikes across all expirations
+    if len(uniq_strikes) == 0:
+        # Use strikes that are shared among at least half the expirations
+        min_expirations = max(1, len(expiration_dates) // 2)
+        uniq_strikes = np.array(list(uniq_strikes.keys()))\
+                        [np.array(list(uniq_strikes.values()))>=min_expirations]
+        
+        if len(uniq_strikes) == 0:
+            # If still no strikes, use all strikes
+            uniq_strikes = np.array(list(uniq_strikes.keys()))
+            
+            if len(uniq_strikes) == 0:
+                fig = go.Figure()
+                fig.update_layout(
+                    title='Volatility Surface - No shared strikes available',
+                    annotations=[dict(
+                        text='Insufficient data to plot volatility surface',
+                        showarrow=False,
+                        xref="paper", yref="paper",
+                        x=0.5, y=0.5
+                    )]
+                )
+                return fig
+    
     xs_matched = np.array(xs_matched)[np.isin(ys_matched, uniq_strikes)]
     zs_matched = np.array(zs_matched)[np.isin(ys_matched, uniq_strikes)]
     ys_matched = np.array(ys_matched)[np.isin(ys_matched, uniq_strikes)]
 
-    fig = go.Figure(data=[go.Surface(z=zs_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
-                                    x=xs_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
-                                    y=ys_matched.reshape((len(ys_calls),uniq_strikes.shape[0])),
-                                    cmin=0,
-                                    cmax=zs_matched.max()+10)])
+    # Reshape the data for the surface plot
+    try:
+        z_reshaped = zs_matched.reshape((len(ys_calls), uniq_strikes.shape[0]))
+        x_reshaped = xs_matched.reshape((len(ys_calls), uniq_strikes.shape[0]))
+        y_reshaped = ys_matched.reshape((len(ys_calls), uniq_strikes.shape[0]))
+        
+        fig = go.Figure(data=[go.Surface(
+            z=z_reshaped,
+            x=x_reshaped,
+            y=y_reshaped,
+            cmin=0,
+            cmax=zs_matched.max()+10
+        )])
+    except ValueError:
+        # If reshaping fails, create a fallback plot
+        fig = go.Figure()
+        fig.update_layout(
+            title='Volatility Surface - Data reshaping error',
+            annotations=[dict(
+                text='Unable to create volatility surface due to data structure issue',
+                showarrow=False,
+                xref="paper", yref="paper",
+                x=0.5, y=0.5
+            )]
+        )
+        return fig
 
     fig.update_layout(
         title={'text':'Volatility Surface'},
@@ -348,9 +370,8 @@ def plot_surface(chains: dict,
             'zaxis_title':'IV (%)',
             'xaxis':{
                     'tickmode': 'array',
-                    'tickvals': xs_matched.reshape((len(ys_calls),
-                                                       uniq_strikes.shape[0]))[:,0][::2],
-                    'ticktext' : expiration_dates[::2],
+                    'tickvals': x_reshaped[:,0][::2],
+                    'ticktext': expiration_dates[::2],
                     'tickfont':{'size':10}
             },
         },
@@ -380,10 +401,6 @@ def calc_unusual_table(df_full_chain: pd.DataFrame,
     Raises:
         TypeError: type is incorrect for any inputs
         ValueError: invalid value for oi_min (less than 0)
-    
-    Example:
-        df = calc_unusual_table(df_full_chain, show_itm, oi_min)
-        print(df)
     """
     if oi_min < 0:
         raise ValueError('oi_min must be greater than or equal to zero.')
@@ -421,6 +438,33 @@ def calc_unusual_table(df_full_chain: pd.DataFrame,
     df_full_chain_calls = df_full_chain_calls.reset_index(drop=True)
     return df_full_chain_calls
 
+def colorize_rows(row, df_full_chain_proc):
+    """
+    Function: colorize_rows
+
+    Description:
+        This function styles the unusual options activity dataframe for display
+        in the Streamlit app. It applies a color gradient to the rows based on
+        the unusual activity values.
+
+    Parameters:
+        row: Current row being processed.
+        df_full_chain_proc: The processed DataFrame with unusual activity data.
+        
+    Returns:
+        list: A list of CSS color styles for each cell in the row.
+    
+    Raises:
+        None
+    """
+    if df_full_chain_proc["unusual_activity"].max() == df_full_chain_proc["unusual_activity"].min():
+        norm = 0.5
+    else:
+        norm = (row.unusual_activity - df_full_chain_proc["unusual_activity"].min()) / \
+            (df_full_chain_proc["unusual_activity"].max() - df_full_chain_proc["unusual_activity"].min())
+    color = f'background-color: rgba({255 * (1 - norm)}, {255 * norm}, 0, 0.5)'
+    return [color] * len(row)
+
 @st.cache_data()
 def generate_widgets(ticker: str):
     """
@@ -434,17 +478,11 @@ def generate_widgets(ticker: str):
         ticker (str): The stock ticker symbol.
     
     Returns:
-        str: HTML code for the TradingView widgets.
+        tuple: A tuple containing three HTML strings for different TradingView widgets.
     
     Raises:
-        nothing
-    
-    Example:
-        ticker = "AAPL"
-        widgets = generate_widgets(ticker)
-        print(widgets)
+        None
     """
-
     single_ticker_widget = f'''
     <div class="tradingview-widget-container">
         <div class="tradingview-widget-container__widget"></div>
@@ -473,9 +511,9 @@ def generate_widgets(ticker: str):
             <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js" async>
             {{
                 "interval": "1m",
-                "width": 425,
+                "width": 280,
                 "isTransparent": true,
-                "height": 450,
+                "height": 500,
                 "symbol": "{ticker}",
                 "showIntervalTabs": true,
                 "displayMode": "single",
@@ -504,18 +542,388 @@ def generate_widgets(ticker: str):
                     "enable_publishing": false,
                     "hide_top_toolbar": false,
                     "save_image": false,
-                    "container_id": "tv_advanced_plot"
+                    "container_id": "tradingview_chart"
                 }});
             </script>
         </div>
         """
+    
+    symbol_info = f"""
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright">
+                <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                    <span class="blue-text">Track all markets on TradingView</span>
+                </a>
+            </div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" async>
+            {{
+            "symbol": "{ticker}",
+            "width": "100%",
+            "locale": "en",
+            "colorTheme": "dark",
+            "isTransparent": true
+            }}
+            </script>
+        </div>
+        """
+    
+    financial_info = f"""
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright">
+                <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                    <span class="blue-text">Track all markets on TradingView</span>
+                </a>
+            </div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-financials.js" async>
+            {{
+            "isTransparent": true,
+            "largeChartUrl": "",
+            "displayMode": "adaptive",
+            "width": "100%",
+            "height": "550",
+            "colorTheme": "dark",
+            "symbol": "{ticker}",
+            "locale": "en"
+            }}
+            </script>
+        </div>   
+        """
 
-    return single_ticker_widget, tech_perf, tv_advanced_plot
-
-@st.cache_data()
-def get_data(ticker: str):
+    company_profile = f"""
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright">
+                <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                    <span class="blue-text">Track all markets on TradingView</span>
+                </a>
+            </div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-profile.js" async>
+            {{
+            "width": "100%",
+            "height": "550",
+            "isTransparent": true,
+            "colorTheme": "dark",
+            "symbol": "{ticker}",
+            "locale": "en"
+            }}
+            </script>
+        </div>
+        """
+    
+    market_overview = f"""
+        <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+        {{
+        "colorTheme": "dark",
+        "dateRange": "12M",
+        "showChart": true,
+        "locale": "en",
+        "largeChartUrl": "",
+        "isTransparent": true,
+        "showSymbolLogo": true,
+        "showFloatingTooltip": true,
+        "width": "500",
+        "height": "550",
+        "plotLineColorGrowing": "rgba(41, 98, 255, 1)",
+        "plotLineColorFalling": "rgba(41, 98, 255, 1)",
+        "gridLineColor": "rgba(242, 242, 242, 0)",
+        "scaleFontColor": "rgba(219, 219, 219, 1)",
+        "belowLineFillColorGrowing": "rgba(41, 98, 255, 0.12)",
+        "belowLineFillColorFalling": "rgba(41, 98, 255, 0.12)",
+        "belowLineFillColorGrowingBottom": "rgba(41, 98, 255, 0)",
+        "belowLineFillColorFallingBottom": "rgba(0, 0, 255, 0)",
+        "symbolActiveColor": "rgba(255, 152, 0, 0.12)",
+        "tabs": [
+            {{
+            "title": "Indices",
+            "symbols": [
+                {{
+                "s": "FOREXCOM:SPXUSD",
+                "d": "S&P 500 Index"
+                }},
+                {{
+                "s": "FOREXCOM:NSXUSD",
+                "d": "US 100 Cash CFD"
+                }},
+                {{
+                "s": "FOREXCOM:DJI",
+                "d": "Dow Jones Industrial Average Index"
+                }},
+                {{
+                "s": "INDEX:NKY",
+                "d": "Japan 225"
+                }},
+                {{
+                "s": "INDEX:DEU40",
+                "d": "DAX Index"
+                }},
+                {{
+                "s": "FOREXCOM:UKXGBP",
+                "d": "FTSE 100 Index"
+                }}
+            ],
+            "originalTitle": "Indices"
+            }},
+            {{
+            "title": "Futures",
+            "symbols": [
+                {{
+                "s": "CME_MINI:ES1!",
+                "d": "S&P 500"
+                }},
+                {{
+                "s": "CME:6E1!",
+                "d": "Euro"
+                }},
+                {{
+                "s": "COMEX:GC1!",
+                "d": "Gold"
+                }},
+                {{
+                "s": "NYMEX:CL1!",
+                "d": "WTI Crude Oil"
+                }},
+                {{
+                "s": "NYMEX:NG1!",
+                "d": "Gas"
+                }},
+                {{
+                "s": "CBOT:ZC1!",
+                "d": "Corn"
+                }}
+            ],
+            "originalTitle": "Futures"
+            }},
+            {{
+            "title": "Bonds",
+            "symbols": [
+                {{
+                "s": "CBOT:ZB1!",
+                "d": "T-Bond"
+                }},
+                {{
+                "s": "CBOT:UB1!",
+                "d": "Ultra T-Bond"
+                }},
+                {{
+                "s": "EUREX:FGBL1!",
+                "d": "Euro Bund"
+                }},
+                {{
+                "s": "EUREX:FBTP1!",
+                "d": "Euro BTP"
+                }},
+                {{
+                "s": "EUREX:FGBM1!",
+                "d": "Euro BOBL"
+                }}
+            ],
+            "originalTitle": "Bonds"
+            }},
+            {{
+            "title": "Forex",
+            "symbols": [
+                {{
+                "s": "FX:EURUSD",
+                "d": "EUR to USD"
+                }},
+                {{
+                "s": "FX:GBPUSD",
+                "d": "GBP to USD"
+                }},
+                {{
+                "s": "FX:USDJPY",
+                "d": "USD to JPY"
+                }},
+                {{
+                "s": "FX:USDCHF",
+                "d": "USD to CHF"
+                }},
+                {{
+                "s": "FX:AUDUSD",
+                "d": "AUD to USD"
+                }},
+                {{
+                "s": "FX:USDCAD",
+                "d": "USD to CAD"
+                }}
+            ],
+            "originalTitle": "Forex"
+            }}
+        ]
+        }}
+        </script>
+        </div>
+        """
+    
+    stock_overview = f"""
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-hotlists.js" async>
+            {{
+            "colorTheme": "dark",
+            "dateRange": "12M",
+            "exchange": "US",
+            "showChart": true,
+            "locale": "en",
+            "largeChartUrl": "",
+            "isTransparent": true,
+            "showSymbolLogo": true,
+            "showFloatingTooltip": true,
+            "width": "500",
+            "height": "550",
+            "plotLineColorGrowing": "rgba(41, 98, 255, 1)",
+            "plotLineColorFalling": "rgba(41, 98, 255, 1)",
+            "gridLineColor": "rgba(152, 152, 152, 0)",
+            "scaleFontColor": "rgba(219, 219, 219, 1)",
+            "belowLineFillColorGrowing": "rgba(41, 98, 255, 0.12)",
+            "belowLineFillColorFalling": "rgba(41, 98, 255, 0.12)",
+            "belowLineFillColorGrowingBottom": "rgba(41, 98, 255, 0)",
+            "belowLineFillColorFallingBottom": "rgba(41, 98, 255, 0)",
+            "symbolActiveColor": "rgba(41, 98, 255, 0.12)"
+            }}
+            </script>
+        </div>
     """
-    Function: get_data
+
+    running_ticker = f"""
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+            {{
+            "symbols": [
+                {{
+                "description": "",
+                "proName": "NASDAQ:TSLA"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:NVDA"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:AAPL"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:AMZN"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:META"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:PLTR"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:MSFT"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:MSTR"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:AMD"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:GOOGL"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:NFLX"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:INTC"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:INTC"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:COIN"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:GOOG"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:SMCI"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:AVGO"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:HOOD"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:MU"
+                }},
+                {{
+                "description": "",
+                "proName": "NYSE:JPM"
+                }},
+                {{
+                "description": "",
+                "proName": "NASDAQ:ADBE"
+                }}
+            ],
+            "showSymbolLogo": true,
+            "isTransparent": true,
+            "displayMode": "regular",
+            "colorTheme": "dark",
+            "locale": "en"
+            }}
+            </script>
+        </div>
+        """
+    
+    heatmap = f"""
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js" async>
+            {{
+            "exchanges": [],
+            "dataSource": "SPX500",
+            "grouping": "sector",
+            "blockSize": "market_cap_basic",
+            "blockColor": "change",
+            "locale": "en",
+            "symbolUrl": "",
+            "colorTheme": "dark",
+            "hasTopBar": true,
+            "isDataSetEnabled": true,
+            "isZoomEnabled": true,
+            "hasSymbolTooltip": true,
+            "isMonoSize": false,
+            "width": "100%",
+            "height": 500
+            }}
+            </script>
+        </div>
+        """
+    
+    return single_ticker_widget, tech_perf, tv_advanced_plot, symbol_info, financial_info, company_profile, market_overview, stock_overview, running_ticker, heatmap
+
+def get_options_data(ticker: str):
+    """
+    Function: get_options_data
 
     Description:
         This function retrieves the options chain data for the given ticker.
@@ -526,349 +934,181 @@ def get_data(ticker: str):
         ticker (str): The stock ticker symbol.
     
     Returns:
-        tuple: A tuple containing the options chain dataframes for calls and puts,
-            the expiration dates, the underlying price, and a boolean indicating
-            if the ticker is valid.
+        tuple: A tuple containing the expiration dates, call options dataframe, 
+        put options dataframe, call options dictionary, put options dictionary,
+        and underlying price.
     
     Raises:
-        TypeError: type is incorrect for any inputs
-        ValueError: invalid value for ticker (empty)
+        ValueError: If ticker is empty or invalid
+        TypeError: If ticker is not a string
+    """
+    if not isinstance(ticker, str):
+        raise TypeError('ticker must be a string')
     
-    Example:
-        ticker = "AAPL"
-        calls, puts, expiration_dates, underlying_price, valid_ticker = get_data(ticker)
-        print(calls, puts, expiration_dates, underlying_price, valid_ticker)
-    """
-    # get option chain and proc
-    df_full_chain_calls_dict=None
-    df_full_chain_puts_dict=None
-    df_full_chain_calls=None
-    df_full_chain_puts=None
-    money_level=None
-    valid_ticker=False
+    if not ticker:
+        raise ValueError('ticker cannot be empty')
 
+    # Initialize return variables
     yfticker = yf.Ticker(ticker)
-    expiration_dates = list(yfticker.options)
+    expiration_dates = list(yfticker.options)  # Convert to list to ensure serializability
 
-    if len(expiration_dates) > 0:
+    # Initialize empty DataFrames and dictionaries
+    df_full_chain_calls = None
+    df_full_chain_puts = None
+    df_full_chain_calls_dict = {}
+    df_full_chain_puts_dict = {}
+    underlying_price = None
 
-        money_level = float(yfticker.option_chain(expiration_dates[0]).\
-                            underlying['regularMarketPrice'])
+    if expiration_dates:
+        # Get the underlying price from first option chain
+        try:
+            opt_chain = yfticker.option_chain(expiration_dates[0])
+            underlying_price = float(opt_chain.underlying['regularMarketPrice'])
+        except (KeyError, AttributeError, IndexError):
+            # Fallback: try to get current price directly
+            try:
+                hist = yfticker.history(period="1d")
+                if not hist.empty:
+                    underlying_price = float(hist['Close'].iloc[-1])
+                else:
+                    underlying_price = None
+            except Exception:
+                underlying_price = None
 
-        # show unusual activity table
-        valid_ticker=True
-        df_full_chain_calls = None
-        df_full_chain_puts = None
-        df_full_chain_calls_dict = {}
-        df_full_chain_puts_dict = {}
-
+        # Retrieve option chains for all expiration dates
         for e in expiration_dates:
+            try:
+                opt = yfticker.option_chain(e)
+                calls = opt.calls
+                puts = opt.puts
 
-            opt = yfticker.option_chain(e)
-            calls = opt.calls
-            puts = opt.puts
+                if df_full_chain_calls is None:
+                    df_full_chain_calls = calls.copy()
+                else:
+                    df_full_chain_calls = pd.concat([df_full_chain_calls, calls])
 
-            if df_full_chain_calls is None:
-                df_full_chain_calls = calls.copy()
-            else:
-                df_full_chain_calls = pd.concat([df_full_chain_calls, calls])
+                if df_full_chain_puts is None:
+                    df_full_chain_puts = puts.copy()
+                else:
+                    df_full_chain_puts = pd.concat([df_full_chain_puts, puts])
 
-            if df_full_chain_puts is None:
-                df_full_chain_puts = puts.copy()
-            else:
-                df_full_chain_puts = pd.concat([df_full_chain_puts, puts])
+                # update master dicts
+                df_full_chain_calls_dict[e] = calls
+                df_full_chain_puts_dict[e] = puts
+            except Exception as e:
+                # Skip this expiration date if there's an error
+                continue
+    
+    # Return all serializable data but not the yfticker object
+    return expiration_dates, df_full_chain_calls, df_full_chain_puts, df_full_chain_calls_dict, df_full_chain_puts_dict, underlying_price
 
-            # update master dicts
-            df_full_chain_calls_dict[e] = calls
-            df_full_chain_puts_dict[e] = puts
-    else:
-        st.error(f'Unable to find option chain for ticker: {ticker}', icon="🚨")
-
-    return df_full_chain_calls_dict, df_full_chain_puts_dict, df_full_chain_calls, \
-        df_full_chain_puts, expiration_dates, money_level, valid_ticker
-
-def process_ticker(ticker: str, ticker_cols: list):
+def get_data(ticker: str):
     """
-    Function: process_ticker
-
+    Function: get_data
+    
     Description:
-        This function processes the given ticker symbol, retrieves the options data,
-        generates widgets, and displays the options chain analysis.
-
+        Wrapper for get_options_data to match the expected signature in tests.
+        
     Parameters:
         ticker (str): The stock ticker symbol.
-        ticker_cols (list): List of columns for the Streamlit app.
-    
+        
     Returns:
-        None
-    
-    Raises:
-        None
-
-    Example:
-        ticker = "AAPL"
-        ticker_cols = [col1, col2]
-        process_ticker(ticker, ticker_cols)
+        tuple: A tuple containing call options dictionary, put options dictionary,
+        call options dataframe, put options dataframe, expiration dates,
+        underlying price, and valid_ticker flag.
     """
-    df_calls_dict, df_puts_dict, df_calls, \
-            df_puts, expiration_dates, atm, \
-                valid_ticker = get_data(ticker)
+    try:
+        expiration_dates, df_calls, df_puts, df_calls_dict, df_puts_dict, atm = get_options_data(ticker)
+        valid_ticker = True if expiration_dates and atm is not None else False
+        return df_calls_dict, df_puts_dict, df_calls, df_puts, expiration_dates, atm, valid_ticker
+    except Exception:
+        return None, None, None, None, [], None, False
 
-    if valid_ticker:
-        single_ticker_widget, tech_perf, tv_advanced_plot = generate_widgets(ticker)
-
-        with ticker_cols[1]:
-            st.components.v1.html(single_ticker_widget, height=100)
-
-        with st.sidebar:
-            st.components.v1.html(tech_perf, height=400)
-
-        st.divider()
-        st.write("#### Unusual Options Activity")
-
-        display_unusual_activity(st.columns((4,4), gap='small'), df_calls, df_puts)
-
-        st.divider()
-        st.write("#### Chain Analysis")
-
-        exp_date = st.selectbox(
-                "Select an expiration date",
-                expiration_dates,
-        )
-        calls = df_calls_dict[exp_date]
-        puts = df_puts_dict[exp_date]
-        calls = calls.sort_values(by='strike')
-        puts = puts.sort_values(by='strike')
-
-        display_chain_analysis(col_inner=st.columns((4,4), gap='small'),
-                               calls=calls,
-                               puts=puts,
-                               atm=atm,
-                               df_calls_dict=df_calls_dict,
-                               df_puts_dict=df_puts_dict,
-                               expiration_dates=expiration_dates)
-
-        st.write("#### Underlying Price Chart")
-        st.components.v1.html(tv_advanced_plot, height=400)
-
-def display_unusual_activity(col_activity, df_calls, df_puts):
+def create_open_interest_chart(calls: pd.DataFrame,
+                               puts: pd.DataFrame,
+                               ATM: float) -> go.Figure:
     """
-    Function: display_unusual_activity
+    Function: create_open_interest_chart
 
     Description:
-        This function displays the unusual options activity for calls and puts
-        in the Streamlit app. It takes in the columns for the app and the dataframes
-        for calls and puts.
-
+        This function creates a plotly figure showing the Open Interest based histograms
+        for call and put options. This is an alias for create_oi_hists for compatibility.
+    
     Parameters:
-        col_activity (list): List of columns for the Streamlit app.
-        df_calls (pd.DataFrame): DataFrame containing call options data.
-        df_puts (pd.DataFrame): DataFrame containing put options data.
-    
+        calls (pd.DataFrame): DataFrame containing call options data.
+        puts (pd.DataFrame): DataFrame containing put options data.
+        ATM (float): The at-the-money strike price (current stock price).
+        
     Returns:
-        None
-    
-    Raises:
-        None
-
-    Example:
-        col_activity = [col1, col2]
-        df_calls = pd.DataFrame(...)
-        df_puts = pd.DataFrame(...)
-        display_unusual_activity(col_activity, df_calls, df_puts)
+        go.Figure: A plotly figure object containing the Open Interest histograms
+         for calls and puts.
     """
-    with col_activity[0]:
-        st.write("#### Calls")
-        oi_min_calls = st.number_input("Minumum OI", min_value=1,
-                                    key='oi_min_calls',
-                                    value=1_000,
-                                help='Minumum Open Interest to consider \
-                                    when computing unusual options activity.')
-        show_itm_calls = st.checkbox("Show ITM", value=False, key='show_itm',
-                            help='Only show in-the-money (ITM) contracts, \
-                                otherwise show only out-of-money.')
-        df_full_chain_calls_proc = calc_unusual_table(df_calls,
-                                                      show_itm_calls,
-                                                      oi_min_calls)
-        styled_df_calls = style_unusual_activity(df_full_chain_calls_proc)
-        st.dataframe(styled_df_calls)
+    return create_oi_hists(calls, puts, ATM)
 
-    with col_activity[1]:
-        st.write("#### Puts")
-        oi_min_puts = st.number_input("Minumum OI", min_value=1,
-                                    key='oi_min_puts',
-                                    value=1_000,
-                                    help='Minumum Open Interest to consider when \
-                                        computing unusual options activity.')
-        show_itm_puts = st.checkbox("Show ITM", value=False, key='show_itm_puts',
-                                    help='Only show in-the-money (ITM) contracts, \
-                                        otherwise show only out-of-money.')
-        df_full_chain_puts_proc = calc_unusual_table(df_puts, show_itm_puts, oi_min_puts)
-        styled_df_puts = style_unusual_activity(df_full_chain_puts_proc)
-        st.dataframe(styled_df_puts)
-
-def style_unusual_activity(df_full_chain_proc):
+def create_volume_chart(calls: pd.DataFrame,
+                        puts: pd.DataFrame,
+                        ATM: float) -> go.Figure:
     """
-    Function: style_unusual_activity
+    Function: create_volume_chart
 
     Description:
-        This function styles the unusual options activity dataframe for display
-        in the Streamlit app. It applies a color gradient to the rows based on
-        the unusual activity values (green to red for high to low activity).
-
+        This function creates a plotly figure showing the Volume based histograms
+        for call and put options. This is an alias for create_vol_hists for compatibility.
+    
     Parameters:
-        df_full_chain_proc (pd.DataFrame): DataFrame containing the processed
-            unusual options activity data.
-    
+        calls (pd.DataFrame): DataFrame containing call options data.
+        puts (pd.DataFrame): DataFrame containing put options data.
+        ATM (float): The at-the-money strike price (current stock price).
+        
     Returns:
-        None
-    
-    Raises:
-        None
-
-    Example:
-        df_full_chain_proc = pd.DataFrame(...)
-        styled_df = style_unusual_activity(df_full_chain_proc)
-        print(styled_df)
+        go.Figure: A plotly figure object containing the volume histograms
+         for calls and puts.
     """
-    def colorize_rows(row):
-        norm = (row.unusual_activity - \
-                df_full_chain_proc["unusual_activity"].min()) / \
-            (df_full_chain_proc["unusual_activity"].max() - \
-                df_full_chain_proc["unusual_activity"].min())
-        color = f'background-color: rgba({255 * (1 - norm)}, \
-            {255 * norm}, 0, 0.5)'
-        return [color] * len(row)
-    return df_full_chain_proc.style.apply(colorize_rows, axis=1)
+    return create_vol_hists(calls, puts, ATM)
 
-def display_chain_analysis(**kwargs):
+def create_iv_chart(calls: pd.DataFrame,
+                   puts: pd.DataFrame) -> go.Figure:
     """
-    Function: display_chain_analysis
+    Function: create_iv_chart
 
     Description:
-        This function displays the chain analysis for calls and puts in the
-        Streamlit app. It takes in the columns for the app, the dataframes for
-        calls and puts, the atm strike price, and the expiration dates.
-
+        This function creates a plotly figure showing the implied volatility smile for
+        call and put options. This is a wrapper around create_iv_smile to maintain
+        compatibility with the function name used in the app.
+    
     Parameters:
-        kwargs (dict): Dictionary containing the following keys:
-            col_inner (list): List of columns for the Streamlit app.
-            calls (pd.DataFrame): DataFrame containing call options data.
-            puts (pd.DataFrame): DataFrame containing put options data.
-            atm (float): The atm strike price.
-            df_calls_dict (dict): Dictionary containing call options dataframes
-                based on expiration date (key).
-            df_puts_dict (dict): Dictionary containing put options dataframes
-                based on expiration date (key).
-            expiration_dates (list): List of expiration dates (list of strings).
-    
+        calls (pd.DataFrame): DataFrame containing call options data.
+        puts (pd.DataFrame): DataFrame containing put options data.
+        
     Returns:
-        None
-    
-    Raises:
-        None
-
-    Example:
-        kwargs = {
-            "col_inner": [col1, col2],
-            "calls": pd.DataFrame(...),
-            "puts": pd.DataFrame(...),
-            "atm": 150.0,
-            "df_calls_dict": {...},
-            "df_puts_dict": {...},
-            "expiration_dates": ["2025-02-28", "2025-03-01"]
-        }
-        display_chain_analysis(**kwargs)
+        go.Figure: A plotly figure object containing the implied volatility smile.
     """
-    col_inner = kwargs.get('col_inner')
-    calls = kwargs.get('calls')
-    puts = kwargs.get('puts')
-    atm = kwargs.get('atm')
-    df_calls_dict = kwargs.get('df_calls_dict')
-    df_puts_dict = kwargs.get('df_puts_dict')
-    expiration_dates = kwargs.get('expiration_dates')
-
-    if not isinstance(col_inner, list):
-        raise TypeError('col_inner must be a list')
-
-    if not isinstance(calls, pd.DataFrame):
-        raise TypeError('calls must be a dataframe')
-
-    if not isinstance(puts, pd.DataFrame):
-        raise TypeError('puts must be a dataframe')
-
-    if not isinstance(atm, float):
-        raise TypeError('atm must be a float')
-
-    if not isinstance(df_calls_dict, dict):
-        raise TypeError('df_calls_dict must be a dictionary')
-
-    if not isinstance(df_puts_dict, dict):
-        raise TypeError('df_puts_dict must be a dictionary')
-
-    if not isinstance(expiration_dates, list):
-        raise TypeError('expiration_dates must be a list')
-
-    with col_inner[0]:
-        oi_hist = create_oi_hists(calls, puts, atm)
-        st.plotly_chart(oi_hist)
-
-    with col_inner[1]:
-        vol_hists = create_vol_hists(calls, puts, atm)
-        st.plotly_chart(vol_hists)
-
-    col_vol = st.columns((4,4), gap='small')
-
-    with col_vol[0]:
-        iv_smile = create_iv_smile(calls, puts, atm)
-        st.plotly_chart(iv_smile)
-
-    with col_vol[1]:
-        show_calls = st.checkbox("Calls",
-                                value=True,
-                                key='volatility_surface_calls',
-                                help='Show surface for calls (checked) or puts (unchecked)')
-
-        if show_calls:
-            surface_fig = plot_surface(df_calls_dict, expiration_dates)
+    # Get the current price
+    if len(calls) > 0 and 'inTheMoney' in calls.columns:
+        atm_call = calls.iloc[(calls['strike'] - calls.iloc[0]['lastPrice']).abs().idxmin()]
+        atm = float(atm_call['strike'])
+    else:
+        # Default to middle strike if can't determine ATM
+        if len(calls) > 0:
+            strikes = sorted(calls['strike'].unique())
+            atm = float(strikes[len(strikes) // 2])
         else:
-            surface_fig = plot_surface(df_puts_dict, expiration_dates)
-        st.plotly_chart(surface_fig, use_container_width=True)
+            atm = 100.0  # Default value
+            
+    return create_iv_smile(calls, puts, atm)
 
-    return True
-
-def main():
+def get_tradingview_widgets(ticker: str) -> tuple:
     """
-    Function: main
-
+    Function: get_tradingview_widgets
+    
     Description:
-        This is the main function, which serves as the entry point for the
-        Streamlit application. It initializes the app, sets the page configuration,
-        and handles user input for stock tickers. It retrieves options data, generates
-        widgets, and displays the options chain analysis.
-
+        Create TradingView widget HTML for a given ticker.
+        This is an alias for generate_widgets to maintain compatibility.
+    
     Parameters:
-        None
-    
+        ticker (str): Stock ticker symbol.
+        
     Returns:
-        None    
-    
-    Raises:
-        None    
-    
-    Example:
-        main()
+        tuple: A tuple of (single_ticker_widget, tech_perf, tv_advanced_plot) HTML strings.
     """
-    ticker_cols = st.columns((3,4), gap='small')
-
-    with ticker_cols[0]:
-        ticker = st.text_input("Enter stock ticker:",
-                               value=None,
-                               placeholder='e.g. NVDA, AAPL, AMZN')
-
-    if ticker is not None:
-        ticker = ticker.upper()
-        process_ticker(ticker, ticker_cols)
-
-# call main
-main()
+    return generate_widgets(ticker)
