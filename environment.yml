@@ -3,10 +3,9 @@ channels:
   - defaults
   - https://repo.anaconda.com/pkgs/main
   - https://repo.anaconda.com/pkgs/r
-  - https://repo.anaconda.com/pkgs/msys2
 dependencies:
-  - bzip2=1.0.8=h2bbff1b_6
-  - ca-certificates=2025.2.25=haa95532_0
+  - bzip2
+  - ca-certificates
   - expat=2.6.4=h8ddb27b_0
   - libffi=3.4.4=hd77b12b_1
   - openssl=3.0.15=h827c3e9_0
@@ -14,8 +13,6 @@ dependencies:
   - setuptools=75.8.0=py312haa95532_0
   - sqlite=3.45.3=h2bbff1b_0
   - tk=8.6.14=h0416ee5_0
-  - vc=14.42=haa95532_4
-  - vs2015_runtime=14.42.34433=he0abc0d_4
   - wheel=0.45.1=py312haa95532_0
   - xz=5.6.4=h4754444_1
   - zlib=1.2.13=h8cc25b3_1
@@ -187,7 +184,6 @@ dependencies:
       - weasel==0.4.1
       - websocket-client==1.8.0
       - websockets==10.4
-      - win32-setctime==1.2.0
       - wrapt==1.17.2
       - yarl==1.18.3
       - yfinance==0.2.54
