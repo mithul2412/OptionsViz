@@ -1,4 +1,4 @@
-# OptionsViz
+# OptionsViz 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Workflow Status](https://github.com/rrichards7/OptionsViz/actions/workflows/build_test.yml/badge.svg)
@@ -9,7 +9,7 @@
 
 *Options Data Visualization*
 
-Options are contracts that give the right (but not the obligation) to buy or sell a stock at a set price before a deadline; allows traders to leverage positions with limited upfront cost. Options chains contain multivariate data (strikes, expiration, Greeks, volume, open interest, etc) that is difficult to interpret in tabular format.  Traders struggle to identify patterns and profitable opportunities: only ~10% of traders make money. Our goal will be to create a series of pivotal, insightful, and impactful visualizations that allow traders to make more informed decisions regarding the options contract(s) in which they are investing to maximize the return and mitigate the risk.
+Options are contracts that give the right (but not the obligation) to buy or sell a stock at a set price before a deadline; allows traders to leverage positions with limited upfront cost. Options chains contain multivariate data (strikes, expiration, Greeks, volume, open interest, etc) that is difficult to interpret in tabular format.  Traders struggle to identify patterns and profitable opportunities: only ~10% of traders make money. Our goal will be to create a series of pivotal, insightful, and impactful visualizations that allow traders to make more informed decisions regarding the options contract(s) in which they are investing to maximize the return and mitigate the risk. 
 
 ## Project Type
 
